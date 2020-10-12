@@ -1,0 +1,493 @@
+version: '2'
+networks:
+  byfn:
+services:
+  ca.org1.dredev.de:
+    image: hyperledger/fabric-ca:1.4
+    environment:
+    - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+    - FABRIC_CA_SERVER_CA_NAME=ca.org1.dredev.de
+    - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org1.dredev.de-cert.pem
+    - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/priv_sk
+    ports:
+    - 7054:7054
+    command: sh -c 'fabric-ca-server start --ca.certfile /etc/hyperledger/fabric-ca-server-config/ca.org1.dredev.de-cert.pem
+      --ca.keyfile /etc/hyperledger/fabric-ca-server-config/priv_sk -b admin:adminpw
+      -d'
+    volumes:
+    - ./crypto-config/peerOrganizations/org1.dredev.de/ca/:/etc/hyperledger/fabric-ca-server-config
+    container_name: ca.org1.dredev.de
+    networks:
+    - byfn
+  ca.org2.dredev.de:
+    image: hyperledger/fabric-ca:1.4
+    environment:
+    - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+    - FABRIC_CA_SERVER_CA_NAME=ca.org2.dredev.de
+    - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org2.dredev.de-cert.pem
+    - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/priv_sk
+    ports:
+    - 8054:7054
+    command: sh -c 'fabric-ca-server start --ca.certfile /etc/hyperledger/fabric-ca-server-config/ca.org2.dredev.de-cert.pem
+      --ca.keyfile /etc/hyperledger/fabric-ca-server-config/priv_sk -b admin:adminpw
+      -d'
+    volumes:
+    - ./crypto-config/peerOrganizations/org2.dredev.de/ca/:/etc/hyperledger/fabric-ca-server-config
+    container_name: ca.org2.dredev.de
+    networks:
+    - byfn
+  zookeeper1:
+    image: hyperledger/fabric-zookeeper
+    container_name: zookeeper1
+    restart: always
+    environment:
+    - ZOO_MY_ID=1
+    - ZOO_SERVERS=server.1=zookeeper1:2888:3888 server.2=zookeeper2:2888:3888 server.3=zookeeper3:2888:3888
+      server.4=zookeeper4:2888:3888
+    ports:
+    - 2181
+    - 2888
+    - 3888
+    networks:
+    - byfn
+  zookeeper2:
+    image: hyperledger/fabric-zookeeper
+    container_name: zookeeper2
+    restart: always
+    environment:
+    - ZOO_MY_ID=2
+    - ZOO_SERVERS=server.1=zookeeper1:2888:3888 server.2=zookeeper2:2888:3888 server.3=zookeeper3:2888:3888
+      server.4=zookeeper4:2888:3888
+    ports:
+    - 2181
+    - 2888
+    - 3888
+    networks:
+    - byfn
+  zookeeper3:
+    image: hyperledger/fabric-zookeeper
+    container_name: zookeeper3
+    restart: always
+    environment:
+    - ZOO_MY_ID=3
+    - ZOO_SERVERS=server.1=zookeeper1:2888:3888 server.2=zookeeper2:2888:3888 server.3=zookeeper3:2888:3888
+      server.4=zookeeper4:2888:3888
+    ports:
+    - 2181
+    - 2888
+    - 3888
+    networks:
+    - byfn
+  zookeeper4:
+    image: hyperledger/fabric-zookeeper
+    container_name: zookeeper4
+    restart: always
+    environment:
+    - ZOO_MY_ID=4
+    - ZOO_SERVERS=server.1=zookeeper1:2888:3888 server.2=zookeeper2:2888:3888 server.3=zookeeper3:2888:3888
+      server.4=zookeeper4:2888:3888
+    ports:
+    - 2181
+    - 2888
+    - 3888
+    networks:
+    - byfn
+  kafka0:
+    image: hyperledger/fabric-kafka
+    container_name: kafka0
+    environment:
+    - KAFKA_ADVERTISED_HOST_NAME=kafka0
+    - KAFKA_ADVERTISED_PORT=9092
+    - KAFKA_BROKER_ID=0
+    - KAFKA_MESSAGE_MAX_BYTES=103809024
+    - KAFKA_REPLICA_FETCH_MAX_BYTES=103809024
+    - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false
+    - KAFKA_NUM_REPLICA_FETCHERS=1
+    - KAFKA_DEFAULT_REPLICATION_FACTOR=1
+    - KAFKA_ZOOKEEPER_CONNECT=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181,zookeeper4:2181
+    ports:
+    - 9092
+    depends_on: &id001
+    - zookeeper1
+    - zookeeper2
+    - zookeeper3
+    - zookeeper4
+    networks:
+    - byfn
+  kafka1:
+    image: hyperledger/fabric-kafka
+    container_name: kafka1
+    environment:
+    - KAFKA_ADVERTISED_HOST_NAME=kafka1
+    - KAFKA_ADVERTISED_PORT=9092
+    - KAFKA_BROKER_ID=1
+    - KAFKA_MESSAGE_MAX_BYTES=103809024
+    - KAFKA_REPLICA_FETCH_MAX_BYTES=103809024
+    - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false
+    - KAFKA_NUM_REPLICA_FETCHERS=1
+    - KAFKA_DEFAULT_REPLICATION_FACTOR=2
+    - KAFKA_ZOOKEEPER_CONNECT=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181,zookeeper4:2181
+    ports:
+    - 9092
+    depends_on: *id001
+    networks:
+    - byfn
+  kafka2:
+    image: hyperledger/fabric-kafka
+    container_name: kafka2
+    environment:
+    - KAFKA_ADVERTISED_HOST_NAME=kafka2
+    - KAFKA_ADVERTISED_PORT=9092
+    - KAFKA_BROKER_ID=2
+    - KAFKA_MESSAGE_MAX_BYTES=103809024
+    - KAFKA_REPLICA_FETCH_MAX_BYTES=103809024
+    - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false
+    - KAFKA_NUM_REPLICA_FETCHERS=1
+    - KAFKA_DEFAULT_REPLICATION_FACTOR=3
+    - KAFKA_ZOOKEEPER_CONNECT=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181,zookeeper4:2181
+    ports:
+    - 9092
+    depends_on: *id001
+    networks:
+    - byfn
+  kafka3:
+    image: hyperledger/fabric-kafka
+    container_name: kafka3
+    environment:
+    - KAFKA_ADVERTISED_HOST_NAME=kafka3
+    - KAFKA_ADVERTISED_PORT=9092
+    - KAFKA_BROKER_ID=3
+    - KAFKA_MESSAGE_MAX_BYTES=103809024
+    - KAFKA_REPLICA_FETCH_MAX_BYTES=103809024
+    - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false
+    - KAFKA_NUM_REPLICA_FETCHERS=1
+    - KAFKA_DEFAULT_REPLICATION_FACTOR=4
+    - KAFKA_ZOOKEEPER_CONNECT=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181,zookeeper4:2181
+    ports:
+    - 9092
+    depends_on: *id001
+    networks:
+    - byfn
+  orderer1.dredev.de:
+    container_name: orderer1.dredev.de
+    image: hyperledger/fabric-orderer:2.0
+    environment:
+    - ORDERER_HOST=orderer1.dredev.de
+    - ORDERER_GENERAL_LOGLEVEL=debug
+    - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+    - ORDERER_GENERAL_LISTENPORT=7050
+    - ORDERER_GENERAL_GENESISMETHOD=file
+    - ORDERER_GENERAL_GENESISFILE=/etc/hyperledger/configtx/genesis.block
+    - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+    - ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/msp/orderer/msp
+    - CONFIGTX_ORDERER_BATCHTIMEOUT=1s
+    - CONFIGTX_ORDERER_ORDERERTYPE=kafka
+    - CONFIGTX_ORDERER_KAFKA_BROKERS=[kafka0:9092,kafka1:9092,kafka2:9092,kafka3:9092]
+    - ORDERER_KAFKA_RETRY_SHORTINTERVAL=1s
+    - ORDERER_KAFKA_RETRY_SHORTTOTAL=30s
+    - ORDERER_KAFKA_VERBOSE=true
+    - ORDERER_ABSOLUTEMAXBYTES=10 MB
+    - ORDERER_PREFERREDMAXBYTES=512 KB
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/orderer
+    command: orderer
+    ports:
+    - 7050:7050
+    volumes:
+    - ./config/:/etc/hyperledger/configtx
+    - ./crypto-config/ordererOrganizations/dredev.de/orderers/orderer1.dredev.de/:/etc/hyperledger/msp/orderer
+    networks:
+    - byfn
+    depends_on: &id002
+    - kafka0
+    - kafka1
+    - kafka2
+    - kafka3
+  orderer2.dredev.de:
+    container_name: orderer2.dredev.de
+    image: hyperledger/fabric-orderer:2.0
+    environment:
+    - ORDERER_HOST=orderer2.dredev.de
+    - ORDERER_GENERAL_LOGLEVEL=debug
+    - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+    - ORDERER_GENERAL_LISTENPORT=7050
+    - ORDERER_GENERAL_GENESISMETHOD=file
+    - ORDERER_GENERAL_GENESISFILE=/etc/hyperledger/configtx/genesis.block
+    - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+    - ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/msp/orderer/msp
+    - CONFIGTX_ORDERER_BATCHTIMEOUT=1s
+    - CONFIGTX_ORDERER_ORDERERTYPE=kafka
+    - CONFIGTX_ORDERER_KAFKA_BROKERS=[kafka0:9092,kafka1:9092,kafka2:9092,kafka3:9092]
+    - ORDERER_KAFKA_RETRY_SHORTINTERVAL=1s
+    - ORDERER_KAFKA_RETRY_SHORTTOTAL=30s
+    - ORDERER_KAFKA_VERBOSE=true
+    - ORDERER_ABSOLUTEMAXBYTES=10 MB
+    - ORDERER_PREFERREDMAXBYTES=512 KB
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/orderer
+    command: orderer
+    ports:
+    - 8050:7050
+    volumes:
+    - ./config/:/etc/hyperledger/configtx
+    - ./crypto-config/ordererOrganizations/dredev.de/orderers/orderer2.dredev.de/:/etc/hyperledger/msp/orderer
+    networks:
+    - byfn
+    depends_on: *id002
+  orderer3.dredev.de:
+    container_name: orderer3.dredev.de
+    image: hyperledger/fabric-orderer:2.0
+    environment:
+    - ORDERER_HOST=orderer3.dredev.de
+    - ORDERER_GENERAL_LOGLEVEL=debug
+    - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+    - ORDERER_GENERAL_LISTENPORT=7050
+    - ORDERER_GENERAL_GENESISMETHOD=file
+    - ORDERER_GENERAL_GENESISFILE=/etc/hyperledger/configtx/genesis.block
+    - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+    - ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/msp/orderer/msp
+    - CONFIGTX_ORDERER_BATCHTIMEOUT=1s
+    - CONFIGTX_ORDERER_ORDERERTYPE=kafka
+    - CONFIGTX_ORDERER_KAFKA_BROKERS=[kafka0:9092,kafka1:9092,kafka2:9092,kafka3:9092]
+    - ORDERER_KAFKA_RETRY_SHORTINTERVAL=1s
+    - ORDERER_KAFKA_RETRY_SHORTTOTAL=30s
+    - ORDERER_KAFKA_VERBOSE=true
+    - ORDERER_ABSOLUTEMAXBYTES=10 MB
+    - ORDERER_PREFERREDMAXBYTES=512 KB
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/orderer
+    command: orderer
+    ports:
+    - 9050:7050
+    volumes:
+    - ./config/:/etc/hyperledger/configtx
+    - ./crypto-config/ordererOrganizations/dredev.de/orderers/orderer3.dredev.de/:/etc/hyperledger/msp/orderer
+    networks:
+    - byfn
+    depends_on: *id002
+  orderer4.dredev.de:
+    container_name: orderer4.dredev.de
+    image: hyperledger/fabric-orderer:2.0
+    environment:
+    - ORDERER_HOST=orderer4.dredev.de
+    - ORDERER_GENERAL_LOGLEVEL=debug
+    - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+    - ORDERER_GENERAL_LISTENPORT=7050
+    - ORDERER_GENERAL_GENESISMETHOD=file
+    - ORDERER_GENERAL_GENESISFILE=/etc/hyperledger/configtx/genesis.block
+    - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+    - ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/msp/orderer/msp
+    - CONFIGTX_ORDERER_BATCHTIMEOUT=1s
+    - CONFIGTX_ORDERER_ORDERERTYPE=kafka
+    - CONFIGTX_ORDERER_KAFKA_BROKERS=[kafka0:9092,kafka1:9092,kafka2:9092,kafka3:9092]
+    - ORDERER_KAFKA_RETRY_SHORTINTERVAL=1s
+    - ORDERER_KAFKA_RETRY_SHORTTOTAL=30s
+    - ORDERER_KAFKA_VERBOSE=true
+    - ORDERER_ABSOLUTEMAXBYTES=10 MB
+    - ORDERER_PREFERREDMAXBYTES=512 KB
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/orderer
+    command: orderer
+    ports:
+    - 10050:7050
+    volumes:
+    - ./config/:/etc/hyperledger/configtx
+    - ./crypto-config/ordererOrganizations/dredev.de/orderers/orderer4.dredev.de/:/etc/hyperledger/msp/orderer
+    networks:
+    - byfn
+    depends_on: *id002
+  peer0.org1.dredev.de:
+    container_name: peer0.org1.dredev.de
+    image: hyperledger/fabric-peer:2.0
+    environment:
+    - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+    - CORE_LOGGING_PEER=debug
+    - CORE_CHAINCODE_LOGGING_LEVEL=DEBUG
+    - CORE_PEER_ID=peer0.org1.dredev.de
+    - CORE_PEER_ADDRESS=peer0.org1.dredev.de:7051
+    - CORE_PEER_LOCALMSPID=Org1MSP
+    - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/peer/
+    - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_byfn
+    - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+    - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb0.org1.dredev.de:5984
+    - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=
+    - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: peer node start
+    ports:
+    - 7051:7051
+    - 7052:7052
+    - 7053:7053
+    volumes:
+    - /var/run/:/host/var/run/
+    - ./crypto-config/peerOrganizations/org1.dredev.de/peers/peer0.org1.dredev.de/msp:/etc/hyperledger/msp/peer
+    - ./crypto-config/peerOrganizations/org1.dredev.de/users:/etc/hyperledger/msp/users
+    - ./config:/etc/hyperledger/configtx
+    depends_on:
+    - couchdb0.org1.dredev.de
+    networks:
+    - byfn
+  couchdb0.org1.dredev.de:
+    container_name: couchdb0.org1.dredev.de
+    image: hyperledger/fabric-couchdb
+    environment:
+    - COUCHDB_USER=
+    - COUCHDB_PASSWORD=
+    ports:
+    - 5984:5984
+    networks:
+    - byfn
+  peer1.org1.dredev.de:
+    container_name: peer1.org1.dredev.de
+    image: hyperledger/fabric-peer:2.0
+    environment:
+    - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+    - CORE_LOGGING_PEER=debug
+    - CORE_CHAINCODE_LOGGING_LEVEL=DEBUG
+    - CORE_PEER_ID=peer1.org1.dredev.de
+    - CORE_PEER_ADDRESS=peer1.org1.dredev.de:7051
+    - CORE_PEER_LOCALMSPID=Org1MSP
+    - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/peer/
+    - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_byfn
+    - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+    - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb1.org1.dredev.de:5984
+    - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=
+    - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: peer node start
+    ports:
+    - 8051:7051
+    - 8052:7052
+    - 8053:7053
+    volumes:
+    - /var/run/:/host/var/run/
+    - ./crypto-config/peerOrganizations/org1.dredev.de/peers/peer1.org1.dredev.de/msp:/etc/hyperledger/msp/peer
+    - ./crypto-config/peerOrganizations/org1.dredev.de/users:/etc/hyperledger/msp/users
+    - ./config:/etc/hyperledger/configtx
+    depends_on:
+    - couchdb1.org1.dredev.de
+    networks:
+    - byfn
+  couchdb1.org1.dredev.de:
+    container_name: couchdb1.org1.dredev.de
+    image: hyperledger/fabric-couchdb
+    environment:
+    - COUCHDB_USER=
+    - COUCHDB_PASSWORD=
+    ports:
+    - 6984:5984
+    networks:
+    - byfn
+  peer0.org2.dredev.de:
+    container_name: peer0.org2.dredev.de
+    image: hyperledger/fabric-peer:2.0
+    environment:
+    - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+    - CORE_LOGGING_PEER=debug
+    - CORE_CHAINCODE_LOGGING_LEVEL=DEBUG
+    - CORE_PEER_ID=peer0.org2.dredev.de
+    - CORE_PEER_ADDRESS=peer0.org2.dredev.de:7051
+    - CORE_PEER_LOCALMSPID=Org2MSP
+    - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/peer/
+    - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_byfn
+    - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+    - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb0.org2.dredev.de:5984
+    - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=
+    - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: peer node start
+    ports:
+    - 9051:7051
+    - 9052:7052
+    - 9053:7053
+    volumes:
+    - /var/run/:/host/var/run/
+    - ./crypto-config/peerOrganizations/org2.dredev.de/peers/peer0.org2.dredev.de/msp:/etc/hyperledger/msp/peer
+    - ./crypto-config/peerOrganizations/org2.dredev.de/users:/etc/hyperledger/msp/users
+    - ./config:/etc/hyperledger/configtx
+    depends_on:
+    - couchdb0.org2.dredev.de
+    networks:
+    - byfn
+  couchdb0.org2.dredev.de:
+    container_name: couchdb0.org2.dredev.de
+    image: hyperledger/fabric-couchdb
+    environment:
+    - COUCHDB_USER=
+    - COUCHDB_PASSWORD=
+    ports:
+    - 7984:5984
+    networks:
+    - byfn
+  peer1.org2.dredev.de:
+    container_name: peer1.org2.dredev.de
+    image: hyperledger/fabric-peer:2.0
+    environment:
+    - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+    - CORE_LOGGING_PEER=debug
+    - CORE_CHAINCODE_LOGGING_LEVEL=DEBUG
+    - CORE_PEER_ID=peer1.org2.dredev.de
+    - CORE_PEER_ADDRESS=peer1.org2.dredev.de:7051
+    - CORE_PEER_LOCALMSPID=Org2MSP
+    - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/peer/
+    - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_byfn
+    - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+    - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb1.org2.dredev.de:5984
+    - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=
+    - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: peer node start
+    ports:
+    - 10051:7051
+    - 10052:7052
+    - 10053:7053
+    volumes:
+    - /var/run/:/host/var/run/
+    - ./crypto-config/peerOrganizations/org2.dredev.de/peers/peer1.org2.dredev.de/msp:/etc/hyperledger/msp/peer
+    - ./crypto-config/peerOrganizations/org2.dredev.de/users:/etc/hyperledger/msp/users
+    - ./config:/etc/hyperledger/configtx
+    depends_on:
+    - couchdb1.org2.dredev.de
+    networks:
+    - byfn
+  couchdb1.org2.dredev.de:
+    container_name: couchdb1.org2.dredev.de
+    image: hyperledger/fabric-couchdb
+    environment:
+    - COUCHDB_USER=
+    - COUCHDB_PASSWORD=
+    ports:
+    - 8984:5984
+    networks:
+    - byfn
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools
+    tty: true
+    environment:
+    - GOPATH=/opt/gopath
+    - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+    - FABRIC_LOGGING_SPEC=DEBUG
+    - CORE_PEER_ID=cli
+    - CORE_PEER_ADDRESS=peer0.org1.dredev.de:7051
+    - CORE_PEER_LOCALMSPID=Org1MSP
+    - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.dredev.de/users/Admin@org1.dredev.de/msp
+    - CORE_CHAINCODE_KEEPALIVE=10
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash
+    volumes:
+    - /var/run/:/host/var/run/
+    - ./chaincodes/java:/opt/gopath/src/github.com/chaincodes/java
+    - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
+    - ./config:/etc/hyperledger/configtx
+    networks:
+    - byfn
+    depends_on:
+    - orderer1.dredev.de
+    - orderer2.dredev.de
+    - orderer3.dredev.de
+    - orderer4.dredev.de
+    - peer0.org1.dredev.de
+    - couchdb0.org1.dredev.de
+    - peer1.org1.dredev.de
+    - couchdb1.org1.dredev.de
+    - peer0.org2.dredev.de
+    - couchdb0.org2.dredev.de
+    - peer1.org2.dredev.de
+    - couchdb1.org2.dredev.de
