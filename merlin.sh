@@ -26,6 +26,7 @@ LIGHTBLUE='\033[1;34m'
 LIGHTPURPLE='\033[1;35m'
 LIGHTCYAN='\033[1;36m'
 WHITE='\033[1;37m'
+IFS=$'\n' read -d '' -r -a ccodes < chaincodes.txt
 
 if [[ -z ${OUTPUTDEV} ]]; then
 	OUTPUTDEV=/dev/stdout
@@ -187,89 +188,33 @@ packCC(){
 	echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<\n"
 	echo -e "${PURPLE}>>> The Chaincodes now get packaged. This is done with the new lifecycle management. ${NOCOLOR}"
 	echo -e "${ORANGE}[*] Start building using gradle"
+	# Read the contents into the array
+	# IFS=$'\n' read -d '' -r -a ccodes < chaincodes.txt
 
-	echo -e "${ORANGE}	[*] Build fabric-random "
-	pushd ${CC_SRC_PATH}/fabric-random/
-				./gradlew clean build installDist
-	popd
-	echo -e "${GREEN}      [+] Build fabric-random finished"
-	echo -e "${ORANGE}	[*] Build fabric-rng "
-	pushd ${CC_SRC_PATH}/fabric-rng/
-				./gradlew clean build installDist
-	popd
-	echo -e "${GREEN}      [+] Build fabric-rng finished"
-	# echo -e "${ORANGE}	[*] Build AuthToken "
-	# pushd ${CC_SRC_PATH}/fabric-authtoken/
-	# 			./gradlew clean build installDist
-	# popd
-	# echo -e "${GREEN}      [+] Build AuthToken finished"
-	# echo -e "${ORANGE}      [*] Build Default "
-	# pushd ${CC_SRC_PATH}/fabric-default/
-  #       ./gradlew clean build installDist
-	# popd
-	# echo -e "${GREEN}      [+] Build Default finished"
-	# echo -e "${ORANGE}      [*] Build OrionACL "
-	# pushd ${CC_SRC_PATH}/fabric-orionACL/
-  #       ./gradlew clean build installDist
-	# popd
-	# echo -e "${GREEN}      [+] Build OrionACL finished "
-	# echo -e "${ORANGE}      [*] Build Transaction Log"
-	# pushd ${CC_SRC_PATH}/fabric-transaction-log/
-  #       ./gradlew clean build installDist
-	# popd
-	# echo -e "${GREEN}      [+] Build Transaction Log finished"
+  for chaincode in "${ccodes[@]}"
+	do
+		echo -e "${ORANGE}	[*] Build ${chaincode} "
+		pushd ${CC_SRC_PATH}/${chaincode}/
+		./gradlew clean build installDist
+		popd
+		echo $PWD
+		echo -e "${GREEN}      [+] Build ${chaincode} finished"
+	done
 	echo -e "${GREEN}[+] Build finished \n"
 	echo -e "${ORANGE}[*] Start packaging... ${NOCOLOR}"
-	echo -e "${ORANGE}	[*] Attempting packing of fabric-random Chaincode"
-	peer lifecycle chaincode package fabric-random.tar.gz --path ${CC_SRC_PATH}/fabric-random/build/install/fabric-random --lang java --label fabric-random_${VERSION} > ${OUTPUTDEV}
-	if [ $? -eq 1 ]; then
-			echo -e "		${RED}[-] Packing of fabric-random Chaincode failed ${NOCOLOR}"
-			return 1
-	else
-			echo -e "		${GREEN}[+] Packing of fabric-random Chaincode succeeded ${NOCOLOR}"
-	fi
-	echo -e "${ORANGE}	[*] Attempting packing of fabric-rng Chaincode"
-	peer lifecycle chaincode package fabric-rng.tar.gz --path ${CC_SRC_PATH}/fabric-rng/build/install/fabric-rng --lang java --label fabric-rng_${VERSION} > ${OUTPUTDEV}
-	if [ $? -eq 1 ]; then
-			echo -e "		${RED}[-] Packing of fabric-rng Chaincode failed ${NOCOLOR}"
-			return 1
-	else
-			echo -e "		${GREEN}[+] Packing of fabric-rng Chaincode succeeded ${NOCOLOR}"
-	fi
-	# echo -e "${ORANGE}	[*] Attempting packing of AuthToken Chaincode"
-	# peer lifecycle chaincode package fabric-authtoken.tar.gz --path ${CC_SRC_PATH}/fabric-authtoken/build/install/fabric-authtoken --lang java --label fabric-authtoken_${VERSION} > ${OUTPUTDEV}
-	# if [ $? -eq 1 ]; then
-	# 		echo -e "		${RED}[-] Packing of AuthToken Chaincode failed ${NOCOLOR}"
-	# 		return 1
-	# else
-	# 		echo -e "		${GREEN}[+] Packing of AuthToken Chaincode succeeded ${NOCOLOR}"
-	# fi
-	# echo -e "${ORANGE}\n	[*] Attempting packing of Default Chaincode"
-	# peer lifecycle chaincode package fabric-default.tar.gz --path ${CC_SRC_PATH}/fabric-default/build/install/fabric-default --lang java --label fabric-default_${VERSION} > ${OUTPUTDEV}
-	# if [ $? -eq 1 ]; then
-	# 		echo -e "		${RED}[-] Packing of Default Chaincode failed ${NOCOLOR}"
-	# 		return 1
-	# else
-	# 		echo -e "		${GREEN}[+] Packing of Default Chaincode succeeded ${NOCOLOR}"
-	# fi
 
-	# echo -e "${ORANGE}\n	[*] Attempting packing of OrionACL Chaincode"
-	# peer lifecycle chaincode package fabric-orionACL.tar.gz --path ${CC_SRC_PATH}/fabric-orionACL/build/install/fabric-orionACL --lang java --label fabric-orionACL_${VERSION} > ${OUTPUTDEV}
-	# if [ $? -eq 1 ]; then
-	# 		echo -e "		${RED}[-] Packing of OrionACL Chaincode failed ${NOCOLOR}"
-	# 		return 1
-	# else
-	# 		echo -e "		${GREEN}[+] Packing of OrionACL Chaincode succeeded ${NOCOLOR}"
-	# fi
-	#
-	# echo -e "${ORANGE}\n	[*] Attempting packing of Transaction-Log Chaincode"
-	# peer lifecycle chaincode package fabric-transaction-log.tar.gz --path ${CC_SRC_PATH}/fabric-transaction-log/build/install/fabric-transaction-log --lang java --label fabric-transaction-log_${VERSION} > ${OUTPUTDEV}
-	# if [ $? -eq 1 ]; then
-	# 		echo -e "		${RED}[-] Packing of Transaction-Log Chaincode failed ${NOCOLOR}"
-	# 		return 1
-	# else
-	# 		echo -e "		${GREEN}[+] Packing of Transaction-Log Chaincode succeeded ${NOCOLOR}"
-	# fi
+	for chaincode in "${ccodes[@]}"
+	do
+		echo -e "${ORANGE}	[*] Attempting packing of ${chaincode} Chaincode"
+
+		peer lifecycle chaincode package ${chaincode}.tar.gz --path ${CC_SRC_PATH}/${chaincode}/build/install/${chaincode} --lang java --label ${chaincode}_${VERSION} > ${OUTPUTDEV}
+		if [ $? -eq 1 ]; then
+				echo -e "		${RED}[-] Packing of ${chaincode} Chaincode failed ${NOCOLOR}"
+				return 1
+		else
+				echo -e "		${GREEN}[+] Packing of ${chaincode} Chaincode succeeded ${NOCOLOR}"
+		fi
+	done
 	echo -e "${GREEN}[+] Packing complete! ${NOCOLOR}"
 	return 0
 }
@@ -289,36 +234,14 @@ installCC(){
 		for (( peer = 0; peer < $NO_PEERS; peer++ )); do
 			changeOrg $peer $org
 			echo -e "	${ORANGE}[*] Attempting install on peer${peer}.org${org}.${DOMAIN} ${NOCOLOR}"
-			peer lifecycle chaincode install fabric-random.tar.gz > ${OUTPUTDEV}
-			if [ $? -eq 1 ]; then
-					echo -e "		${RED}[-] Install of fabric-random Chaincode on peer${peer}.org${org}.${DOMAIN} failed!${NOCOLOR}"
-					return 1
-			fi
-			peer lifecycle chaincode install fabric-rng.tar.gz > ${OUTPUTDEV}
-			if [ $? -eq 1 ]; then
-					echo -e "		${RED}[-] Install of fabric-rng Chaincode on peer${peer}.org${org}.${DOMAIN} failed!${NOCOLOR}"
-					return 1
-			fi
-			# peer lifecycle chaincode install fabric-authtoken.tar.gz > ${OUTPUTDEV}
-			# if [ $? -eq 1 ]; then
-			# 		echo -e "		${RED}[-] Install of AuthToken Chaincode on peer${peer}.org${org}.${DOMAIN} failed!${NOCOLOR}"
-			# 		return 1
-			# fi
-			# peer lifecycle chaincode install fabric-default.tar.gz > ${OUTPUTDEV}
-			# if [ $? -eq 1 ]; then
-			# 		echo -e "		${RED}[-] Install of Default Chaincode on peer${peer}.org${org}.${DOMAIN} failed!${NOCOLOR}"
-			# 		return 1
-			# fi
-			# peer lifecycle chaincode install fabric-orionACL.tar.gz > ${OUTPUTDEV}
-			# if [ $? -eq 1 ]; then
-			# 		echo -e "		${RED}[-] Install of OrionACL Chaincode on peer${peer}.org${org}.${DOMAIN} failed!${NOCOLOR}"
-			# 		return 1
-			# fi
-			# peer lifecycle chaincode install fabric-transaction-log.tar.gz > ${OUTPUTDEV}
-			# if [ $? -eq 1 ]; then
-			# 		echo -e "		${RED}[-] Install of Transaction-Log Chaincode on peer${peer}.org${org}.${DOMAIN} failed!${NOCOLOR}"
-			# 		return 1
-			# fi
+			for chaincode in "${ccodes[@]}"
+			do
+				peer lifecycle chaincode install ${chaincode}.tar.gz > ${OUTPUTDEV}
+				if [ $? -eq 1 ]; then
+						echo -e "		${RED}[-] Install of ${chaincode} Chaincode on peer${peer}.org${org}.${DOMAIN} failed!${NOCOLOR}"
+						return 1
+				fi
+			done
 			echo -e "${GREEN}	[+] Install on peer${peer}.org${org}.${DOMAIN} ${NOCOLOR} finished \n"
 		done
 	done
@@ -331,19 +254,11 @@ installCC(){
 			return 1
 	fi
 	cat log.txt
-	export RANDOM_PACKAGE_ID=$(sed -n "/fabric-random_1/{s/^Package ID: //; s/, Label:.*$//; p;}" log.txt)
-	export RNG_PACKAGE_ID=$(sed -n "/fabric-rng_1/{s/^Package ID: //; s/, Label:.*$//; p;}" log.txt)
-	# export AUTH_PACKAGE_ID=$(sed -n "/fabric-authtoken_1/{s/^Package ID: //; s/, Label:.*$//; p;}" log.txt)
-	# export DEFAULT_PACKAGE_ID=$(sed -n "/fabric-default_1/{s/^Package ID: //; s/, Label:.*$//; p;}" log.txt)
-	# export ACL_PACKAGE_ID=$(sed -n "/fabric-orionACL_1/{s/^Package ID: //; s/, Label:.*$//; p;}" log.txt)
-	# export TRANSACTION_PACKAGE_ID=$(sed -n "/fabric-transaction-log_1/{s/^Package ID: //; s/, Label:.*$//; p;}" log.txt)
 	echo -e "${PURPLE}>>> Package Identifiers: ${NOCOLOR}"
-	echo -e "${LIGHTBLUE}>>> [>] Random: $RANDOM_PACKAGE_ID ${NOCOLOR}"
-	echo -e "${LIGHTBLUE}>>> [>] RNG: $RNG_PACKAGE_ID ${NOCOLOR}"
-	# echo -e "${LIGHTBLUE}>>> [>] AuthToken: $AUTH_PACKAGE_ID ${NOCOLOR}"
-	# echo -e "${LIGHTBLUE}>>> [>] Default: $DEFAULT_PACKAGE_ID ${NOCOLOR}"
-	# echo -e "${LIGHTBLUE}>>> [>] OrionACL: $ACL_PACKAGE_ID ${NOCOLOR}"
-	# echo -e "${LIGHTBLUE}>>> [>] Transaction Log: $TRANSACTION_PACKAGE_ID ${NOCOLOR}"
+	for chaincode in "${ccodes[@]}"
+	do
+		echo -e "${LIGHTBLUE}>>> [>] ${chaincode}: $(sed -n "/${chaincode}_1/{s/^Package ID: //; s/, Label:.*$//; p;}" log.txt) ${NOCOLOR}"	# indirect, allows to treat CID as a var name
+	done
 	return 0
 }
 
@@ -361,36 +276,17 @@ approveCC(){
 	for (( org = 1; org <= $NO_ORGANIZATIONS; org++ )); do
 		changeOrg 0 $org
 		echo -e "${ORANGE}		[*] Org${org} is approving ... ${NOCOLOR}"
-		peer lifecycle chaincode approveformyorg ${ORDERERS} --channelID ${CHANNEL_ID} --name fabric-random --version ${VERSION} --package-id ${RANDOM_PACKAGE_ID} --sequence ${VERSION} --waitForEvent > ${OUTPUTDEV}
-		if [ $? -eq 1 ]; then
-				echo -e "		${RED}	[-] Org${org} did not approve Random Chaincode! ${NOCOLOR}"
-				return 1
-		fi
-		peer lifecycle chaincode approveformyorg ${ORDERERS} --channelID ${CHANNEL_ID} --name fabric-rng --version ${VERSION} --package-id ${RNG_PACKAGE_ID} --sequence ${VERSION} --waitForEvent > ${OUTPUTDEV}
-		if [ $? -eq 1 ]; then
-				echo -e "		${RED}	[-] Org${org} did not approve RNG Chaincode! ${NOCOLOR}"
-				return 1
-		fi
-		# peer lifecycle chaincode approveformyorg ${ORDERERS} --channelID ${CHANNEL_ID} --name fabric-authtoken --version ${VERSION} --package-id ${AUTH_PACKAGE_ID} --sequence ${VERSION} --waitForEvent > ${OUTPUTDEV}
-		# if [ $? -eq 1 ]; then
-		# 		echo -e "		${RED}	[-] Org${org} did not approve AuthToken Chaincode! ${NOCOLOR}"
-		# 		return 1
-		# fi
-		# peer lifecycle chaincode approveformyorg ${ORDERERS} --channelID ${CHANNEL_ID} --name fabric-default --version ${VERSION} --package-id ${DEFAULT_PACKAGE_ID} --sequence ${VERSION} --waitForEvent > ${OUTPUTDEV}
-		# if [ $? -eq 1 ]; then
-		# 		echo -e "		${RED}	[-] Org${org} did not approve Default Chaincode! ${NOCOLOR}"
-		# 		return 1
-		# fi
-		# peer lifecycle chaincode approveformyorg ${ORDERERS} --channelID ${CHANNEL_ID} --name fabric-orionACL --version ${VERSION} --package-id ${ACL_PACKAGE_ID} --sequence ${VERSION} --waitForEvent > ${OUTPUTDEV}
-		# if [ $? -eq 1 ]; then
-		# 		echo -e "		${RED}	[-] Org${org} did not approve OrionACL Chaincode! ${NOCOLOR}"
-		# 		return 1
-		# fi
-		# peer lifecycle chaincode approveformyorg ${ORDERERS} --channelID ${CHANNEL_ID} --name fabric-transaction-log --version ${VERSION} --package-id ${TRANSACTION_PACKAGE_ID} --sequence ${VERSION} --waitForEvent > ${OUTPUTDEV}
-		# if [ $? -eq 1 ]; then
-		# 		echo -e "		${RED}	[-] Org${org} did not approve Transaction-Log Chaincode! ${NOCOLOR}"
-		# 		return 1
-		# fi
+		for chaincode in "${ccodes[@]}"
+		do
+			CID=${chaincode}_ID
+			changeOrg 0 $org
+			echo -e "${ORANGE}		[*] Org${org} is approving ... ${NOCOLOR}"
+			peer lifecycle chaincode approveformyorg ${ORDERERS} --channelID ${CHANNEL_ID} --name $chaincode --version ${VERSION} --package-id $(sed -n "/${chaincode}_1/{s/^Package ID: //; s/, Label:.*$//; p;}" log.txt) --sequence ${VERSION} --waitForEvent > ${OUTPUTDEV}
+			if [ $? -eq 1 ]; then
+					echo -e "		${RED}	[-] Org${org} did not approve ${chaincode} Chaincode! ${NOCOLOR}"
+					return 1
+			fi
+		done
 	done
 	echo -e "${GREEN}[+] Approving complete. ${NOCOLOR}"
 	return 0
@@ -407,42 +303,15 @@ checkCommitReadiness(){
 	echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<\n"
 	echo -e "${PURPLE}>>> Now that the chaincodes are approved by each organization, they need to be committed. First lets check for the commit readiness! ${NOCOLOR}"
 	changeOrg 0 1			#peer0.org1
-	echo -e "${ORANGE}		[*] Checking commit readiness for Random... ${NOCOLOR}"
-	peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_ID} --name fabric-random --version ${VERSION} --sequence ${VERSION} --output json > ${OUTPUTDEV}
-	if [ $? -eq 1 ]; then
-			echo -e "		${RED}	[-] Random not ready to be committed! ${NOCOLOR}"
-			return 1
-	fi
-	echo -e "${ORANGE}		[*] Checking commit readiness for RNG... ${NOCOLOR}"
-	peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_ID} --name fabric-rng --version ${VERSION} --sequence ${VERSION} --output json > ${OUTPUTDEV}
-	if [ $? -eq 1 ]; then
-			echo -e "		${RED}	[-] RNG not ready to be committed! ${NOCOLOR}"
-			return 1
-	fi
-	# echo -e "${ORANGE}		[*] Checking commit readiness for Default... ${NOCOLOR}"
-	# peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_ID} --name fabric-authtoken --version ${VERSION} --sequence ${VERSION} --output json > ${OUTPUTDEV}
-	# if [ $? -eq 1 ]; then
-	# 		echo -e "		${RED}	[-] AuthToken not ready to be committed! ${NOCOLOR}"
-	# 		return 1
-	# fi
-	# echo -e "${ORANGE}		[*] Checking commit readiness for Default... ${NOCOLOR}"
-	# peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_ID} --name fabric-default --version ${VERSION} --sequence ${VERSION} --output json > ${OUTPUTDEV}
-	# if [ $? -eq 1 ]; then
-	# 		echo -e "		${RED}	[-] Default not ready to be committed! ${NOCOLOR}"
-	# 		return 1
-	# fi
-	# echo -e "${ORANGE}		[*] Checking commit readiness for OrionACL... ${NOCOLOR}"
-	# peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_ID} --name fabric-orionACL --version ${VERSION} --sequence ${VERSION} --output json > ${OUTPUTDEV}
-	# if [ $? -eq 1 ]; then
-	# 		echo -e "		${RED}	[-] OrionACL not ready to be committed! ${NOCOLOR}"
-	# 		return 1
-	# fi
-	# echo -e "${ORANGE}		[*] Checking commit readiness for Transaction-Log... ${NOCOLOR}"
-	# peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_ID} --name fabric-transaction-log --version ${VERSION} --sequence ${VERSION} --output json > ${OUTPUTDEV}
-	# if [ $? -eq 1 ]; then
-	# 		echo -e "		${RED}	[-] Transaction-Log not ready to be committed! ${NOCOLOR}"
-	# 		return 1
-	# fi
+	for chaincode in "${ccodes[@]}"
+	do
+		echo -e "${ORANGE}		[*] Checking commit readiness for ${chaincode}... ${NOCOLOR}"
+		peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_ID} --name ${chaincode} --version ${VERSION} --sequence ${VERSION} --output json > ${OUTPUTDEV}
+		if [ $? -eq 1 ]; then
+				echo -e "		${RED}	[-] ${chaincode} not ready to be committed! ${NOCOLOR}"
+				return 1
+		fi
+	done
 	echo -e "${PURPLE}>>> JSON with true everywhere? "
 	return 0
 
@@ -460,56 +329,26 @@ commitCC(){
 	echo -e "${PURPLE}>>> Alright, final step now. Lets commit all of the Chaincodes! ${NOCOLOR}"
 	changeOrg 0 1 		# peer0.org1
 	echo -e "${ORANGE}	[*] Start committing... ${NOCOLOR}"
+	for chaincode in "${ccodes[@]}"
+	do
+		echo -e "${ORANGE}		[*] Commit ${chaincode}... ${NOCOLOR}"
+		peer lifecycle chaincode commit $ORDERERS --channelID ${CHANNEL_ID} --name ${chaincode} $PEER_CON_PARAMS --version ${VERSION} --sequence ${VERSION} > ${OUTPUTDEV}
+		if [ $? -eq 1 ]; then
+				echo -e "		${RED}	[-] ${chaincode} could not be committed! ${NOCOLOR}"
+				return 1
+		fi
+	done
 
-	echo -e "${ORANGE}		[*] Commit Random... ${NOCOLOR}"
-	peer lifecycle chaincode commit $ORDERERS --channelID ${CHANNEL_ID} --name fabric-random $PEER_CON_PARAMS --version ${VERSION} --sequence ${VERSION} > ${OUTPUTDEV}
-	if [ $? -eq 1 ]; then
-			echo -e "		${RED}	[-] Random could not be committed! ${NOCOLOR}"
-			return 1
-	fi
-	echo -e "${ORANGE}		[*] Commit RNG... ${NOCOLOR}"
-	peer lifecycle chaincode commit $ORDERERS --channelID ${CHANNEL_ID} --name fabric-rng $PEER_CON_PARAMS --version ${VERSION} --sequence ${VERSION} > ${OUTPUTDEV}
-	if [ $? -eq 1 ]; then
-			echo -e "		${RED}	[-] RNG could not be committed! ${NOCOLOR}"
-			return 1
-	fi
-	# echo -e "${ORANGE}		[*] Commit AuthToken... ${NOCOLOR}"
-	# peer lifecycle chaincode commit $ORDERERS --channelID ${CHANNEL_ID} --name fabric-authtoken $PEER_CON_PARAMS --version ${VERSION} --sequence ${VERSION} > ${OUTPUTDEV}
-	# if [ $? -eq 1 ]; then
-	# 		echo -e "		${RED}	[-] AuthToken could not be committed! ${NOCOLOR}"
-	# 		return 1
-	# fi
-	# echo -e "${ORANGE}		[*] Commit Default... ${NOCOLOR}"
-	# peer lifecycle chaincode commit $ORDERERS --channelID ${CHANNEL_ID} --name fabric-default $PEER_CON_PARAMS --version ${VERSION} --sequence ${VERSION} > ${OUTPUTDEV}
-	# if [ $? -eq 1 ]; then
-	# 		echo -e "		${RED}	[-] Default could not be committed! ${NOCOLOR}"
-	# 		return 1
-	# fi
-	# echo -e "${ORANGE}		[*] Commit OrionACL... ${NOCOLOR}"
-	# peer lifecycle chaincode commit $ORDERERS --channelID ${CHANNEL_ID} --name fabric-orionACL $PEER_CON_PARAMS --version ${VERSION} --sequence ${VERSION} > ${OUTPUTDEV}
-	# if [ $? -eq 1 ]; then
-	# 		echo -e "		${RED}	[-] OrionACL could not be committed! ${NOCOLOR}"
-	# 		return 1
-	# fi
-	#
-	# echo -e "${ORANGE}		[*] Commit Transaction-Log... ${NOCOLOR}"
-	# peer lifecycle chaincode commit $ORDERERS --channelID ${CHANNEL_ID} --name fabric-transaction-log $PEER_CON_PARAMS --version ${VERSION} --sequence ${VERSION} > ${OUTPUTDEV}
-	# if [ $? -eq 1 ]; then
-	# 		echo -e "		${RED}	[-] Transaction-Log could not be committed! ${NOCOLOR}"
-	# 		return 1
-	# fi
 
 	echo -e "${GREEN}	[+] Committing complete! ${NOCOLOR}"
 
 	echo -e "${PURPLE}>>> Everything seems to be installed, lets see"
 
 	echo -e "\n${LIGHTCYAN} =<=<=<=<=<=<=<=<=<=<=<=<=<=<= Chaincodes <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
-	peer lifecycle chaincode querycommitted --channelID ${CHANNEL_ID} --name fabric-random > ${OUTPUTDEV}
-	peer lifecycle chaincode querycommitted --channelID ${CHANNEL_ID} --name fabric-rng > ${OUTPUTDEV}
-	# peer lifecycle chaincode querycommitted --channelID ${CHANNEL_ID} --name fabric-authtoken > ${OUTPUTDEV}
-	# peer lifecycle chaincode querycommitted --channelID ${CHANNEL_ID} --name fabric-default > ${OUTPUTDEV}
-	# peer lifecycle chaincode querycommitted --channelID ${CHANNEL_ID} --name fabric-orionACL > ${OUTPUTDEV}
-	# peer lifecycle chaincode querycommitted --channelID ${CHANNEL_ID} --name fabric-transaction-log > ${OUTPUTDEV}
+	for chaincode in "${ccodes[@]}"
+	do
+		peer lifecycle chaincode querycommitted --channelID ${CHANNEL_ID} --name ${chaincode} > ${OUTPUTDEV}
+	done
 	echo -e "\n${LIGHTCYAN} =<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<="
 
 }
@@ -673,7 +512,7 @@ fi
 # Merlin will automatically create all of the defined Docker Containers within the docker-compose.yaml file.
 # The Containers need some time to start, so be sure to give some seconds of sleep until you continue!
 startDocker
-sleep 8
+sleep 15
 
 # The Channel Creation
 # Merlin will now create a new Channel called $CHANNEL_ID. This depends on the Crypto Cerficates from
@@ -777,3 +616,4 @@ echo -e "${PURPLE}|  |  |  |  |  |  | |  . \`  | |   __|  |  | "
 echo -e "${PURPLE}|  '--'  |  \`--'  | |  |\\   | |  |____ |__| "
 echo -e "${PURPLE}|_______/ \\______/  |__| \\__| |_______|(__) "
 echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
+

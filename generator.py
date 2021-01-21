@@ -80,6 +80,25 @@ class bcolors:
         self.ENDC = ''
 
 
+def generate_chaincode_entries():
+    print(bcolors.OKBLUE + "[*] Please Specify your Chaincode that you want to install. We assume that it is a Java Packet within the folder \"chaincodes/java/\".")
+    con = "y"
+    with open("chaincodes.txt", "w+") as fp:
+        while con == "y" or con == "Y":
+            try:
+                chaincode_name = input("Name of the folder: ")
+
+                # Check if it exists
+                if os.path.exists("chaincodes/java/"+chaincode_name):
+                    fp.write(chaincode_name + "\n")
+                else:
+                    print(bcolors.FAIL + "[-] You provided a non existing directory! Nothing written")
+                con = input("Add another? (Y/n)")
+            except ValueError:
+                print(bcolors.FAIL + "[-] Oof, you did not provide proper values. Exiting")
+                exit(1)
+
+
 def generate_configtx(_orgs=2, _orderers=3, _kafka_brokers=4, _consortium="WebConsortium", _domain="dredev.de", _blocksize=10, _timeout=1):
     yaml_new = ruamel.yaml.YAML()
 
@@ -1148,7 +1167,7 @@ if __name__ == '__main__':
         pass
 
     print(bcolors.FAIL + ">>> Alright, now let's go! <<< ")
-
+    generate_chaincode_entries()
     print(bcolors.HEADER + ">>> First we need to create a file called '.env'. It includes a Variable for the docker-compose file")
     generate_env(compose_name)
     print(bcolors.HEADER + ">>> Ok that's done. Now lets create the Crypto Config File!")
@@ -1205,3 +1224,4 @@ if __name__ == '__main__':
         os.system(env_str + " bash merlin.sh")
     else:
         print(bcolors.HEADER + "Alright, Quitting")
+
