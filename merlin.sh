@@ -195,7 +195,18 @@ packCC(){
 	do
 		echo -e "${ORANGE}	[*] Build ${chaincode} "
 		pushd ${CC_SRC_PATH}/${chaincode}/
-		./gradlew clean build installDist
+		./gradlew clean build shadowJar
+		if [ $? -eq 1 ]; then
+				echo -e "		${RED}[-] Gradle failed. Wrong Version? Trying with installDist ${NOCOLOR}"
+				./gradlew clean build installDist		
+				if [ $? -eq 1 ]; then
+					echo -e "		${RED}[-] Gradle still failed ${NOCOLOR}"
+					exit 1
+				else
+					echo -e "		${GREEN}[+] Gradle succeeded now ${NOCOLOR}"			
+					
+				fi
+		fi
 		popd
 		echo $PWD
 		echo -e "${GREEN}      [+] Build ${chaincode} finished"
@@ -207,7 +218,7 @@ packCC(){
 	do
 		echo -e "${ORANGE}	[*] Attempting packing of ${chaincode} Chaincode"
 
-		peer lifecycle chaincode package ${chaincode}.tar.gz --path ${CC_SRC_PATH}/${chaincode}/build/install/${chaincode} --lang java --label ${chaincode}_${VERSION} > ${OUTPUTDEV}
+		peer lifecycle chaincode package ${chaincode}.tar.gz --path ${CC_SRC_PATH}/${chaincode}/build/libs --lang java --label ${chaincode}_${VERSION} > ${OUTPUTDEV}
 		if [ $? -eq 1 ]; then
 				echo -e "		${RED}[-] Packing of ${chaincode} Chaincode failed ${NOCOLOR}"
 				return 1
@@ -275,7 +286,6 @@ approveCC(){
 	echo -e "${ORANGE}[*] Start approving... ${NOCOLOR}"
 	for (( org = 1; org <= $NO_ORGANIZATIONS; org++ )); do
 		changeOrg 0 $org
-		echo -e "${ORANGE}		[*] Org${org} is approving ... ${NOCOLOR}"
 		for chaincode in "${ccodes[@]}"
 		do
 			CID=${chaincode}_ID
