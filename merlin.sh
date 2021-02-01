@@ -1,6 +1,6 @@
 #!/bin/bash
 export CHANNEL_ID=mychannel		# Channel name
-export VERSION=1							# Version of the Smart Contract
+export VERSION=1				# Version of the Smart Contract
 export FABRIC_CFG_PATH=$PWD		# This is where the core.yaml is located
 
 MAINPROFILE=MainChannel
@@ -33,14 +33,15 @@ if [[ -z ${OUTPUTDEV} ]]; then
 fi
 
 generateCryptoStuff(){
-		echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<="
-		echo -e "${PURPLE}  ______ .______     ____    ____ .______   .___________.  ______     _______  _______ .__   __. "
-		echo -e "${PURPLE} /      ||   _  \\    \\   \\  /   / |   _  \\  |           | /  __  \\   /  _____||   ____||  \\ |  | "
-		echo -e "${PURPLE}|  ,----'|  |_)  |    \\   \\/   /  |  |_)  | \`---|  |----\`|  |  |  | |  |  __  |  |__   |   \\|  | "
-		echo -e "${PURPLE}|  |     |      /      \\_    _/   |   ___/      |  |     |  |  |  | |  | |_ | |   __|  |  . \`  | "
-		echo -e "${PURPLE}|  \`----.|  |\\  \\----.   |  |     |  |          |  |     |  \`--'  | |  |__| | |  |____ |  |\\   | "
-		echo -e "${PURPLE} \\______|| _| \`._____|   |__|     | _|          |__|      \\______/   \\______| |_______||__| \\__| "
-		echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
+		echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<="
+		echo -e "${PURPLE}  e88'Y88                             d8                                    "
+		echo -e "${PURPLE} d888  'Y 888,8, Y8b Y888P 888 88e   d88    e88 88e   e88 888  ,e e,  888 8e  "
+		echo -e "${PURPLE}C8888     888 \"   Y8b Y8P  888 888b d88888 d888 888b d888 888 d88 88b 888 88b "
+		echo -e "${PURPLE} Y888  ,d 888      Y8b Y   888 888P  888   Y888 888P Y888 888 888   , 888 888 "
+		echo -e "${PURPLE}  \"88,d88 888       888    888 88\"   888    \"88 88\"   \"88 888  \"YeeP\" 888 888 "
+		echo -e "${PURPLE}                    888    888                         ,  88P          "
+		echo -e "${PURPLE}                    888    888                        \"8\",P\"                  "
+		echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
 	 	echo -e "${PURPLE}>>> Generating Crypto Material ${NOCOLOR}"
 		cryptogen generate --config=./crypto-config.yaml
 		echo -e "${ORANGE}[*] Generating channel.tx, genesis.block, anchor peers ${NOCOLOR}"
@@ -77,6 +78,8 @@ changeOrg(){
 
 	export baseport=$(( 7051+1000*(($NO_PEERS*($org -1))+$peer) ))
 	export CORE_PEER_LOCALMSPID=Org${org}MSP
+	export CORE_PEER_TLS_ENABLED=true
+	export CORE_PEER_TLS_ROOTCERT_FILE=$BASEPATH/peerOrganizations/org${org}.${DOMAIN}/peers/peer0.org${org}.${DOMAIN}/tls/ca.crt
 	export CORE_PEER_MSPCONFIGPATH=$BASEPATH/peerOrganizations/org${org}.${DOMAIN}/users/Admin@org${org}.${DOMAIN}/msp
 	export CORE_PEER_ADDRESS=localhost:${baseport}
 	#echo -e "${CYAN}>>> Changed Org: Org$org Peer$peer ${NOCOLOR}"
@@ -84,12 +87,11 @@ changeOrg(){
 
 startDocker(){
 	echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<"
-	echo -e "${PURPLE} _______   ______     ______  __  ___  _______ .______      "
-  echo -e "${PURPLE}|       \\ /  __  \\   /      ||  |/  / |   ____||   _  \\     "
-  echo -e "${PURPLE}|  .--.  |  |  |  | |  ,----'|  '  /  |  |__   |  |_)  |    "
-  echo -e "${PURPLE}|  |  |  |  |  |  | |  |     |    <   |   __|  |      /     "
-  echo -e "${PURPLE}|  '--'  |  \`--'  | |  \`----.|  .  \\  |  |____ |  |\\  \\----."
-  echo -e "${PURPLE}|_______/ \\______/   \\______||__|\\__\\ |_______|| _| \`._____|"
+    echo -e "${PURPLE}888 88e                      888     "
+    echo -e "${PURPLE}888 888b   e88 88e   e88'888 888 ee  ,e e,  888,8, "
+    echo -e "${PURPLE}888 8888D d888 888b d888  '8 888 P  d88 88b 888 \""
+    echo -e "${PURPLE}888 888P  Y888 888P Y888   , 888 b  888   , 888    "
+    echo -e "${PURPLE}888 88\"    \"88 88\"   \"88,e8' 888 8b  \"YeeP\" 888 "
 	echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<\n"
 	echo -e "${PURPLE}>>> I will now start all the containers! Docker do your thing!${NOCOLOR}"
 	docker-compose up -d
@@ -97,20 +99,21 @@ startDocker(){
 }
 
 createChannel(){
-	echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<"
-	echo -e "${PURPLE}  ______ .______       _______     ___   .___________. _______      ______  __    __       ___      .__   __. .__   __.  _______  __      "
- 	echo -e "${PURPLE} /      ||   _  \\     |   ____|   /   \\  |           ||   ____|    /      ||  |  |  |     /   \\     |  \\ |  | |  \\ |  | |   ____||  |     "
-	echo -e "${PURPLE}|  ,----'|  |_)  |    |  |__     /  ^  \\ \`---|  |----\`|  |__      |  ,----'|  |__|  |    /  ^  \\    |   \\|  | |   \\|  | |  |__   |  |     "
-	echo -e "${PURPLE}|  |     |      /     |   __|   /  /_\\  \\    |  |     |   __|     |  |     |   __   |   /  /_\\  \\   |  . \`  | |  . \`  | |   __|  |  |     "
-	echo -e "${PURPLE}|  \`----.|  |\\  \\----.|  |____ /  _____  \\   |  |     |  |____    |  \`----.|  |  |  |  /  _____  \\  |  |\\   | |  |\\   | |  |____ |  \`----."
- 	echo -e "${PURPLE} \\______|| _| \`._____||_______/__/     \\__\\  |__|     |_______|    \\______||__|  |__| /__/     \\__\\ |__| \\__| |__| \\__| |_______||_______|"
-	echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<\n"
+	echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<="
+    echo -e "${PURPLE}  e88'Y88                          d8               e88'Y88 888                                     888"
+    echo -e "${PURPLE} d888  'Y 888,8,  ,e e,   ,\"Y88b  d88    ,e e,     d888  'Y 888 ee   ,\"Y88b 888 8e  888 8e   ,e e,  888"
+    echo -e "${PURPLE}C8888     888 \"  d88 88b \"8\" 888 d88888 d88 88b   C8888     888 88b \"8\" 888 888 88b 888 88b d88 88b 888"
+    echo -e "${PURPLE} Y888  ,d 888    888   , ,ee 888  888   888   ,    Y888  ,d 888 888 ,ee 888 888 888 888 888 888   , 888"
+    echo -e "${PURPLE}  \"88,d88 888     \"YeeP\" \"88 888  888    \"YeeP\"     \"88,d88 888 888 \"88 888 888 888 888 888  \"YeeP\" 888"
+	echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
 	changeOrg 0 1
 	if [ ! -f ./config/channel.tx ]; then
 			echo -e "${RED}>>> HEY! channel.tx is missing! Generate it first. Aborting"
 			return 1
 	fi
+	set -x
 	peer channel create ${ORDERERS} -c ${CHANNEL_ID} -f ./config/channel.tx > ${OUTPUTDEV}
+	set +x
 	if [ $? -eq 1 ]; then
 			echo -e "${PURPLE}>>> Ok second try ${NOCOLOR}"
 			sleep $SLEEPINTERVAL
@@ -125,21 +128,20 @@ createChannel(){
 }
 
 joinChannel(){
-		echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<="
-		echo -e "${PURPLE}  ______  __    __       ___      .__   __. .__   __.  _______  __                __    ______    __  .__   __. "
-		echo -e "${PURPLE} /      ||  |  |  |     /   \\     |  \\ |  | |  \\ |  | |   ____||  |              |  |  /  __  \\  |  | |  \\ |  | "
-		echo -e "${PURPLE}|  ,----'|  |__|  |    /  ^  \\    |   \\|  | |   \\|  | |  |__   |  |              |  | |  |  |  | |  | |   \\|  | "
-		echo -e "${PURPLE}|  |     |   __   |   /  /_\\  \\   |  . \`  | |  . \`  | |   __|  |  |        .--.  |  | |  |  |  | |  | |  . \`  | "
-		echo -e "${PURPLE}|  \`----.|  |  |  |  /  _____  \\  |  |\   | |  |\   | |  |____ |  \`----.   |  \`--'  | |  \`--'  | |  | |  |\   | "
-		echo -e "${PURPLE} \\______||__|  |__| /__/     \\__\\ |__| \\__| |__| \\__| |_______||_______|    \\______/   \\______/  |__| |__| \\__|"
-		echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
+		echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<="
+        echo -e "${PURPLE}  e88'Y88 888                                     888       888           ,e,"
+        echo -e "${PURPLE} d888  'Y 888 ee   ,\"Y88b 888 8e  888 8e   ,e e,  888       888  e88 88e   \"  888 8e"
+        echo -e "${PURPLE}C8888     888 88b \"8\" 888 888 88b 888 88b d88 88b 888       888 d888 888b 888 888 88b"
+        echo -e "${PURPLE} Y888  ,d 888 888 ,ee 888 888 888 888 888 888   , 888    e  88P Y888 888P 888 888 888"
+        echo -e "${PURPLE}  \"88,d88 888 888 \"88 888 888 888 888 888  \"YeeP\" 888   \"8\",P'   \"88 88\"  888 888 888"
+		echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
 	 	echo -e "${PURPLE}>>> Joining Channel ${CHANNEL_ID} on each Peer ${NOCOLOR}"
 		echo -e "${ORANGE}[*] Start Joining of Channel ${CHANNEL_ID} ${NOCOLOR}"
 		for (( org = 1; org <= $NO_ORGANIZATIONS; org++ )); do
 			for (( peer = 0; peer < $NO_PEERS; peer++ )); do
 					changeOrg $peer $org
 					echo -e "		${ORANGE}[*] Attempting Channel join for peer${peer}.org${org}.${DOMAIN} ${NOCOLOR}"
-					peer channel join -b ${CHANNEL_ID}.block > ${OUTPUTDEV}
+					peer channel join --tls ${CORE_PEER_TLS_ENABLED} -b ${CHANNEL_ID}.block > ${OUTPUTDEV}
 					if [ $? -eq 1 ]; then
 							echo -e "		${RED}[-] Channel join failed on peer${peer}.org${org}.${DOMAIN} ${NOCOLOR}"
 							return 1
@@ -153,14 +155,15 @@ joinChannel(){
 }
 
 updateAnchors(){
-	echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<="
-	echo -e "${PURPLE}     ___      .__   __.   ______  __    __    ______   .______          __    __  .______    _______       ___   .___________. _______ "
-	echo -e "${PURPLE}    /   \\     |  \ |  |  /      ||  |  |  |  /  __  \\  |   _  \\        |  |  |  | |   _  \\  |       \\     /   \\  |           ||   ____|"
-	echo -e "${PURPLE}   /  ^  \\    |   \\|  | |  ,----'|  |__|  | |  |  |  | |  |_)  |       |  |  |  | |  |_)  | |  .--.  |   /  ^  \\ \`---|  |----\`|  |__   "
-	echo -e "${PURPLE}  /  /_\\  \\   |  . \`  | |  |     |   __   | |  |  |  | |      /        |  |  |  | |   ___/  |  |  |  |  /  /_\\  \\    |  |     |   __|  "
-	echo -e "${PURPLE} /  _____  \\  |  |\\   | |  \`----.|  |  |  | |  \`--'  | |  |\\  \\----.   |  \`--'  | |  |      |  '--'  | /  _____  \\   |  |     |  |____ "
-	echo -e "${PURPLE}/__/     \\__\\ |__| \\__|  \\______||__|  |__|  \\______/  | _| \`._____|    \\______/  | _|      |_______/ /__/     \\__\\  |__|     |_______|"
-	echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
+	echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<"
+    echo -e "${PURPLE}    e Y8b                      888                        8888 8888               888           d8"
+    echo -e "${PURPLE}   d8b Y8b    888 8e   e88'888 888 ee   e88 88e  888,8,   8888 8888 888 88e   e88 888  ,\"Y88b  d88    ,e e,"
+    echo -e "${PURPLE}  d888b Y8b   888 88b d888  '8 888 88b d888 888b 888 \"    8888 8888 888 888b d888 888 \"8\" 888 d88888 d88 88b"
+    echo -e "${PURPLE} d888888888b  888 888 Y888   , 888 888 Y888 888P 888      8888 8888 888 888P Y888 888 ,ee 888  888   888   , "
+    echo -e "${PURPLE}d8888888b Y8b 888 888  \"88,e8' 888 888  \"88 88\"  888      'Y88 88P' 888 88\"   \"88 888 \"88 888  888    \"YeeP\" "
+    echo -e "${PURPLE}                                                                    888                                      "
+    echo -e "${PURPLE}                                                                    888                                     "
+	echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<\n"
 	echo -e "${PURPLE}>>> Now we need to update the Anchor peers, to tell them, that they are important for us,\n since they serve as the gateway peers for all the others. ${NOCOLOR}"
 	for (( org = 1; org <= $NO_ORGANIZATIONS; org++ )); do
 		echo -e "		${ORANGE}[*] Attempting Anchor Update for peer0.org${org}.${DOMAIN} ${NOCOLOR}"
@@ -178,14 +181,13 @@ updateAnchors(){
 }
 
 packCC(){
-	echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<"
-	echo -e "${PURPLE}.______      ___       ______  __  ___      ______  __    __       ___       __  .__   __.   ______   ______    _______   _______ "
-	echo -e "${PURPLE}|   _  \\    /   \\     /      ||  |/  /     /      ||  |  |  |     /   \\     |  | |  \\ |  |  /      | /  __  \\  |       \\ |   ____|"
-	echo -e "${PURPLE}|  |_)  |  /  ^  \\   |  ,----'|  '  /     |  ,----'|  |__|  |    /  ^  \\    |  | |   \\|  | |  ,----'|  |  |  | |  .--.  ||  |__   "
-	echo -e "${PURPLE}|   ___/  /  /_\\  \\  |  |     |    <      |  |     |   __   |   /  /_\\  \\   |  | |  . \`  | |  |     |  |  |  | |  |  |  ||   __|  "
-	echo -e "${PURPLE}|  |     /  _____  \\ |  \`----.|  .  \\     |  \`----.|  |  |  |  /  _____  \\  |  | |  |\\   | |  \`----.|  \`--'  | |  '--'  ||  |____ "
-	echo -e "${PURPLE}| _|    /__/     \\__\\ \\______||__|\\__\\     \\______||__|  |__| /__/     \\__\\ |__| |__| \\__|  \\______| \\______/  |_______/ |_______|"
-	echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<\n"
+	echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<="
+    echo -e "${PURPLE}888 88e                   888        e88'Y88   e88'Y88"
+    echo -e "${PURPLE}888 888D  ,\"Y88b  e88'888 888 ee    d888  'Y  d888  'Y"
+    echo -e "${PURPLE}888 88\"  \"8\" 888 d888  '8 888 P    C8888     C8888"
+    echo -e "${PURPLE}888      ,ee 888 Y888   , 888 b     Y888  ,d  Y888  ,d"
+    echo -e "${PURPLE}888      \"88 888  \"88,e8' 888 8b     \"88,d88   \"88,d88"
+	echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
 	echo -e "${PURPLE}>>> The Chaincodes now get packaged. This is done with the new lifecycle management. ${NOCOLOR}"
 	echo -e "${ORANGE}[*] Start building using gradle"
 	# Read the contents into the array
@@ -231,14 +233,13 @@ packCC(){
 }
 
 installCC(){
-	echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<="
-	echo -e "${PURPLE} __  .__   __.      _______.___________.    ___       __       __      "
- 	echo -e "${PURPLE}|  | |  \\ |  |     /       |           |   /   \\     |  |     |  |     "
- 	echo -e "${PURPLE}|  | |   \\|  |    |   (----\`---|  |----\`  /  ^  \\    |  |     |  |     "
- 	echo -e "${PURPLE}|  | |  . \`  |     \\   \\       |  |      /  /_\\  \\   |  |     |  |     "
- 	echo -e "${PURPLE}|  | |  |\\   | .----)   |      |  |     /  _____  \\  |  \`----.|  \`----."
- 	echo -e "${PURPLE}|__| |__| \\__| |_______/       |__|    /__/     \\__\\ |_______||_______|"
-  echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
+	echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<="
+	echo -e "${PURPLE}888                 d8           888 888     e88'Y88   e88'Y88"
+    echo -e "${PURPLE}888 888 8e   dP\"Y  d88    ,\"Y88b 888 888    d888  'Y  d888  'Y"
+    echo -e "${PURPLE}888 888 88b C88b  d88888 \"8\" 888 888 888   C8888     C8888"
+    echo -e "${PURPLE}888 888 888  Y88D  888   ,ee 888 888 888    Y888  ,d  Y888  ,d"
+    echo -e "${PURPLE}888 888 888 d,dP   888   \"88 888 888 888     \"88,d88   \"88,d88"
+    echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
 	echo -e "${PURPLE}\n>>> The Chaincodes is now being installed on each peer ${NOCOLOR}"
 	echo -e "${ORANGE}[*] Start installing... \n${NOCOLOR}"
 	for (( org = 1; org <= $NO_ORGANIZATIONS; org++ )); do
@@ -268,20 +269,22 @@ installCC(){
 	echo -e "${PURPLE}>>> Package Identifiers: ${NOCOLOR}"
 	for chaincode in "${ccodes[@]}"
 	do
-		echo -e "${LIGHTBLUE}>>> [>] ${chaincode}: $(sed -n "/${chaincode}_1/{s/^Package ID: //; s/, Label:.*$//; p;}" log.txt) ${NOCOLOR}"	# indirect, allows to treat CID as a var name
+	    tmp=$(sed -n "/${chaincode}_1/{s/^Package ID: //; s/, Label:.*$//; p;}" log.txt)
+		echo -e "${LIGHTBLUE}>>> [>] ${chaincode}: ${tmp}  ${NOCOLOR}"	# indirect, allows to treat CID as a var name
 	done
 	return 0
 }
 
 approveCC(){
-	echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<="
-	echo -e "${PURPLE}     ___      .______   .______   .______        ______   ____    ____  _______      ______   ______ "
- 	echo -e "${PURPLE}    /   \\     |   _  \\  |   _  \\  |   _  \\      /  __  \\  \\   \\  /   / |   ____|    /      | /      | "
-	echo -e "${PURPLE}   /  ^  \\    |  |_)  | |  |_)  | |  |_)  |    |  |  |  |  \\   \\/   /  |  |__      |  ,----'|  ,----'"
-	echo -e "${PURPLE}  /  /_\\  \\   |   ___/  |   ___/  |      /     |  |  |  |   \\      /   |   __|     |  |     |  |     "
-	echo -e "${PURPLE} /  _____  \\  |  |      |  |      |  |\\  \\----.|  \`--'  |    \\    /    |  |____    |  \`----.|  \`----."
-	echo -e "${PURPLE}/__/     \\__\\ | _|      | _|      | _| \`._____| \\______/      \\__/     |_______|    \\______| \\______|"
-	echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
+	echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<="
+    echo -e "${PURPLE}    e Y8b                                                              e88'Y88   e88'Y88"
+    echo -e "${PURPLE}   d8b Y8b    888 88e  888 88e  888,8,  e88 88e  Y8b Y888P  ,e e,     d888  'Y  d888  'Y "
+    echo -e "${PURPLE}  d888b Y8b   888 888b 888 888b 888 \"  d888 888b  Y8b Y8P  d88 88b   C8888     C8888     "
+    echo -e "${PURPLE} d888888888b  888 888P 888 888P 888    Y888 888P   Y8b \"   888   ,    Y888  ,d  Y888  ,d "
+    echo -e "${PURPLE}d8888888b Y8b 888 88\"  888 88\"  888     \"88 88\"     Y8P     \"YeeP\"     \"88,d88   \"88,d88 "
+    echo -e "${PURPLE}              888      888                                                               "
+    echo -e "${PURPLE}              888      888                                                               "
+	echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
 	echo -e "${PURPLE}>>> Now the installed Chaincodes need to be approved by the Orderers and the Organizations! ${NOCOLOR}"
 	echo -e "${ORANGE}[*] Start approving... ${NOCOLOR}"
 	for (( org = 1; org <= $NO_ORGANIZATIONS; org++ )); do
@@ -303,14 +306,13 @@ approveCC(){
 }
 
 checkCommitReadiness(){
-	echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<"
-	echo -e "${PURPLE}  ______  __    __   _______   ______  __  ___      ______   ______   .___  ___. .___  ___.  __  .___________.  "
- 	echo -e "${PURPLE} /      ||  |  |  | |   ____| /      ||  |/  /     /      | /  __  \\  |   \\/   | |   \\/   | |  | |           |"
-	echo -e "${PURPLE}|  ,----'|  |__|  | |  |__   |  ,----'|  '  /     |  ,----'|  |  |  | |  \\  /  | |  \\  /  | |  | \`---|  |----\`"
-	echo -e "${PURPLE}|  |     |   __   | |   __|  |  |     |    <      |  |     |  |  |  | |  |\\/|  | |  |\\/|  | |  |     |  |        "
-	echo -e "${PURPLE}|  \`----.|  |  |  | |  |____ |  \`----.|  .  \\     |  \`----.|  \`--'  | |  |  |  | |  |  |  | |  |     |  |        "
-  echo -e "${PURPLE} \\______||__|  |__| |_______| \\______||__|\\__\\     \\______| \\______/  |__|  |__| |__|  |__| |__|     |__|    "
-	echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<\n"
+	echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<="
+    echo -e "${PURPLE}  e88'Y88 888                      888        e88'Y88                                   ,e,   d8"
+    echo -e "${PURPLE} d888  'Y 888 ee   ,e e,   e88'888 888 ee    d888  'Y  e88 88e  888 888 8e  888 888 8e   \"   d88   "
+    echo -e "${PURPLE}C8888     888 88b d88 88b d888  '8 888 P    C8888     d888 888b 888 888 88b 888 888 88b 888 d88888"
+    echo -e "${PURPLE} Y888  ,d 888 888 888   , Y888   , 888 b     Y888  ,d Y888 888P 888 888 888 888 888 888 888  888 "
+    echo -e "${PURPLE}  \"88,d88 888 888  \"YeeP\"  \"88,e8' 888 8b     \"88,d88  \"88 88\"  888 888 888 888 888 888 888  888"
+	echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
 	echo -e "${PURPLE}>>> Now that the chaincodes are approved by each organization, they need to be committed. First lets check for the commit readiness! ${NOCOLOR}"
 	changeOrg 0 1			#peer0.org1
 	for chaincode in "${ccodes[@]}"
@@ -328,21 +330,20 @@ checkCommitReadiness(){
 }
 
 commitCC(){
-	echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<"
-	echo -e "${PURPLE}  ______   ______   .___  ___. .___  ___.  __  .___________.   "
-	echo -e "${PURPLE} /      | /  __  \\  |   \\/   | |   \\/   | |  | |           |   "
-	echo -e "${PURPLE}|  ,----'|  |  |  | |  \\  /  | |  \\  /  | |  | \`---|  |----\`   "
-	echo -e "${PURPLE}|  |     |  |  |  | |  |\\/|  | |  |\\/|  | |  |     |  |        "
-	echo -e "${PURPLE}|  \`----.|  \`--'  | |  |  |  | |  |  |  | |  |     |  |        "
-	echo -e "${PURPLE} \\______| \\______/  |__|  |__| |__|  |__| |__|     |__|        "
-	echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<\n"
+	echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<"
+    echo -e "${PURPLE}  e88'Y88                                   ,e,   d8       e88'Y88   e88'Y88"
+    echo -e "${PURPLE} d888  'Y  e88 88e  888 888 8e  888 888 8e   \"   d88      d888  'Y  d888  'Y "
+    echo -e "${PURPLE}C8888     d888 888b 888 888 88b 888 888 88b 888 d88888   C8888     C8888     "
+    echo -e "${PURPLE} Y888  ,d Y888 888P 888 888 888 888 888 888 888  888      Y888  ,d  Y888  ,d "
+    echo -e "${PURPLE}  \"88,d88  \"88 88\"  888 888 888 888 888 888 888  888       \"88,d88   \"88,d88"
+	echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<\n"
 	echo -e "${PURPLE}>>> Alright, final step now. Lets commit all of the Chaincodes! ${NOCOLOR}"
 	changeOrg 0 1 		# peer0.org1
 	echo -e "${ORANGE}	[*] Start committing... ${NOCOLOR}"
 	for chaincode in "${ccodes[@]}"
 	do
 		echo -e "${ORANGE}		[*] Commit ${chaincode}... ${NOCOLOR}"
-		peer lifecycle chaincode commit $ORDERERS --channelID ${CHANNEL_ID} --name ${chaincode} $PEER_CON_PARAMS --version ${VERSION} --sequence ${VERSION} > ${OUTPUTDEV}
+		peer lifecycle chaincode commit ${ORDERERS} --channelID ${CHANNEL_ID} --name ${chaincode} $PEER_CON_PARAMS --version ${VERSION} --sequence ${VERSION} > ${OUTPUTDEV}
 		if [ $? -eq 1 ]; then
 				echo -e "		${RED}	[-] ${chaincode} could not be committed! ${NOCOLOR}"
 				return 1
@@ -619,11 +620,16 @@ echo -e "${GREEN}\n>>> ALL DONE !!! Happy interacting"
 
 #testRoutine 50
 echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<="
-echo -e "${PURPLE} _______   ______   .__   __.  _______  __  "
-echo -e "${PURPLE}|       \\ /  __  \\  |  \\ |  | |   ____||  | "
-echo -e "${PURPLE}|  .--.  |  |  |  | |   \\|  | |  |__   |  | "
-echo -e "${PURPLE}|  |  |  |  |  |  | |  . \`  | |   __|  |  | "
-echo -e "${PURPLE}|  '--'  |  \`--'  | |  |\\   | |  |____ |__| "
-echo -e "${PURPLE}|_______/ \\______/  |__| \\__| |_______|(__) "
+echo -e "${PURPLE}888 88e"
+echo -e "${PURPLE}888 888b   e88 88e  888 8e   ,e e,"
+echo -e "${PURPLE}888 8888D d888 888b 888 88b d88 88b"
+echo -e "${PURPLE}888 888P  Y888 888P 888 888 888   ,"
+echo -e "${PURPLE}888 88\"    \"88 88\"  888 888  \"YeeP\""
+#echo -e "${PURPLE} _______   ______   .__   __.  _______  __  "
+#echo -e "${PURPLE}|       \\ /  __  \\  |  \\ |  | |   ____||  | "
+#echo -e "${PURPLE}|  .--.  |  |  |  | |   \\|  | |  |__   |  | "
+#echo -e "${PURPLE}|  |  |  |  |  |  | |  . \`  | |   __|  |  | "
+#echo -e "${PURPLE}|  '--'  |  \`--'  | |  |\\   | |  |____ |__| "
+#echo -e "${PURPLE}|_______/ \\______/  |__| \\__| |_______|(__) "
 echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
 
