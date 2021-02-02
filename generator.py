@@ -51,35 +51,8 @@ if __name__ == '__main__':
     parser.add_argument('-t', dest="timeout", default=1, type=int, help='The timeout value in seconds until a block '
                                                                         'gets committed, if it is not filled to its '
                                                                         'blocksize')
-    parser.add_argument("-C", dest="clear", action='store_true', default=False,  help="Just clear the junk")
     args = parser.parse_args()
     compose_name = "net"
-    if args.clear:
-        # Just clear
-        import shutil
-        import glob
-        tars = glob.glob("./*.tar.gz")
-        list_of_files = [".env",
-                         "chaincodes.txt",
-                         "configtx.yaml",
-                         "connection_profile.yaml",
-                         "core.yaml",
-                         "crypto-config.yaml",
-                         "docker-compose.yaml",
-                         "*.tar.gz",
-                         "invoke",
-                         "query",
-                         "mychannel.block"] + tars
-        for file in list_of_files:
-            if os.path.exists(file):
-                os.remove(file)
-        # Delete the dirs
-        if os.path.exists("./crypto-config"):
-            shutil.rmtree("./crypto-config")
-
-        if os.path.exists("./config"):
-            shutil.rmtree("./config")
-        exit(0)
 
     try:
         f = open("docker-compose.yaml")
