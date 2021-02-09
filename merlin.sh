@@ -2,7 +2,7 @@
 export CHANNEL_ID=mychannel		# Channel name
 export VERSION=1				# Version of the Smart Contract
 export FABRIC_CFG_PATH=$PWD		# This is where the core.yaml is located
-
+source peer_vars.sh
 MAINPROFILE=MainChannel
 ORDERERPROFILE=OrdererDefault
 BASEPATH=$PWD/crypto-config
@@ -168,7 +168,6 @@ updateAnchors(){
 	for (( org = 1; org <= $NO_ORGANIZATIONS; org++ )); do
 		echo -e "		${ORANGE}[*] Attempting Anchor Update for peer0.org${org}.${DOMAIN} ${NOCOLOR}"
 		changeOrg 0 ${org}		# Default Peer0 is always the Anchor
-		echo -e "$CORE_PEER_LOCALMSPID $CORE_PEER_MSPCONFIGPATH $CORE_PEER_ADDRESS"
 		peer channel update ${ORDERERS} -c ${CHANNEL_ID} -f ./config/Org${org}MSPanchors.tx > ${OUTPUTDEV}
 		if [ $? -eq 1 ]; then
 				echo -e "		${RED}[-] Anchor Update failed on peer0.org${org}.${DOMAIN} ${NOCOLOR}"
@@ -192,139 +191,154 @@ packCC(){
 	echo -e "${ORANGE}[*] Start building using gradle"
 	# Read the contents into the array
 	# IFS=$'\n' read -d '' -r -a ccodes < chaincodes.txt
-
+	if [ ${#ccodes[@]} -eq 0 ]; then
+		echo -e "${LIGHTCYAN}	[i] No Chaincode to install, skipping"
+	else
   for chaincode in "${ccodes[@]}"
-	do
-		echo -e "${ORANGE}	[*] Build ${chaincode} "
-		pushd ${CC_SRC_PATH}/${chaincode}/
-		./gradlew clean build shadowJar
-		if [ $? -eq 1 ]; then
-				echo -e "		${RED}[-] Gradle failed. Wrong Version? Trying with installDist ${NOCOLOR}"
-				./gradlew clean build installDist		
-				if [ $? -eq 1 ]; then
-					echo -e "		${RED}[-] Gradle still failed ${NOCOLOR}"
-					exit 1
-				else
-					echo -e "		${GREEN}[+] Gradle succeeded now ${NOCOLOR}"			
-					
-				fi
-		fi
-		popd
-		echo $PWD
-		echo -e "${GREEN}      [+] Build ${chaincode} finished"
-	done
-	echo -e "${GREEN}[+] Build finished \n"
-	echo -e "${ORANGE}[*] Start packaging... ${NOCOLOR}"
+		do
+			echo -e "${ORANGE}	[*] Build ${chaincode} "
+			pushd ${CC_SRC_PATH}/${chaincode}/
+			./gradlew clean build shadowJar
+			if [ $? -eq 1 ]; then
+					echo -e "		${RED}[-] Gradle failed. Wrong Version? Trying with installDist ${NOCOLOR}"
+					./gradlew clean build installDist
+					if [ $? -eq 1 ]; then
+						echo -e "		${RED}[-] Gradle still failed ${NOCOLOR}"
+						exit 1
+					else
+						echo -e "		${GREEN}[+] Gradle succeeded now ${NOCOLOR}"
 
-	for chaincode in "${ccodes[@]}"
-	do
-		echo -e "${ORANGE}	[*] Attempting packing of ${chaincode} Chaincode"
+					fi
+			fi
+			popd
+			echo $PWD
+			echo -e "${GREEN}      [+] Build ${chaincode} finished"
+		done
+		echo -e "${GREEN}[+] Build finished \n"
+		echo -e "${ORANGE}[*] Start packaging... ${NOCOLOR}"
 
-		peer lifecycle chaincode package ${chaincode}.tar.gz --path ${CC_SRC_PATH}/${chaincode}/build/libs --lang java --label ${chaincode}_${VERSION} > ${OUTPUTDEV}
-		if [ $? -eq 1 ]; then
-				echo -e "		${RED}[-] Packing of ${chaincode} Chaincode failed ${NOCOLOR}"
-				return 1
-		else
-				echo -e "		${GREEN}[+] Packing of ${chaincode} Chaincode succeeded ${NOCOLOR}"
-		fi
-	done
-	echo -e "${GREEN}[+] Packing complete! ${NOCOLOR}"
+		for chaincode in "${ccodes[@]}"
+		do
+			echo -e "${ORANGE}	[*] Attempting packing of ${chaincode} Chaincode"
+
+			peer lifecycle chaincode package ${chaincode}.tar.gz --path ${CC_SRC_PATH}/${chaincode}/build/libs --lang java --label ${chaincode}_${VERSION} > ${OUTPUTDEV}
+			if [ $? -eq 1 ]; then
+					echo -e "		${RED}[-] Packing of ${chaincode} Chaincode failed ${NOCOLOR}"
+					return 1
+			else
+					echo -e "		${GREEN}[+] Packing of ${chaincode} Chaincode succeeded ${NOCOLOR}"
+			fi
+		done
+		echo -e "${GREEN}[+] Packing complete! ${NOCOLOR}"
+	fi
 	return 0
 }
 
 installCC(){
 	echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<="
 	echo -e "${PURPLE}888                 d8           888 888     e88'Y88   e88'Y88"
-    echo -e "${PURPLE}888 888 8e   dP\"Y  d88    ,\"Y88b 888 888    d888  'Y  d888  'Y"
-    echo -e "${PURPLE}888 888 88b C88b  d88888 \"8\" 888 888 888   C8888     C8888"
-    echo -e "${PURPLE}888 888 888  Y88D  888   ,ee 888 888 888    Y888  ,d  Y888  ,d"
-    echo -e "${PURPLE}888 888 888 d,dP   888   \"88 888 888 888     \"88,d88   \"88,d88"
-    echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
-	echo -e "${PURPLE}\n>>> The Chaincodes is now being installed on each peer ${NOCOLOR}"
-	echo -e "${ORANGE}[*] Start installing... \n${NOCOLOR}"
-	for (( org = 1; org <= $NO_ORGANIZATIONS; org++ )); do
-		for (( peer = 0; peer < $NO_PEERS; peer++ )); do
-			changeOrg $peer $org
-			echo -e "	${ORANGE}[*] Attempting install on peer${peer}.org${org}.${DOMAIN} ${NOCOLOR}"
-			for chaincode in "${ccodes[@]}"
-			do
-				peer lifecycle chaincode install ${chaincode}.tar.gz > ${OUTPUTDEV}
-				if [ $? -eq 1 ]; then
-						echo -e "		${RED}[-] Install of ${chaincode} Chaincode on peer${peer}.org${org}.${DOMAIN} failed!${NOCOLOR}"
-						return 1
-				fi
+  echo -e "${PURPLE}888 888 8e   dP\"Y  d88    ,\"Y88b 888 888    d888  'Y  d888  'Y"
+  echo -e "${PURPLE}888 888 88b C88b  d88888 \"8\" 888 888 888   C8888     C8888"
+  echo -e "${PURPLE}888 888 888  Y88D  888   ,ee 888 888 888    Y888  ,d  Y888  ,d"
+  echo -e "${PURPLE}888 888 888 d,dP   888   \"88 888 888 888     \"88,d88   \"88,d88"
+  echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
+	if [ ${#ccodes[@]} -eq 0 ]; then
+		echo -e "${LIGHTCYAN}	[i] No Chaincode to install, skipping"
+	else
+		echo -e "${PURPLE}\n>>> The Chaincodes is now being installed on each peer ${NOCOLOR}"
+		echo -e "${ORANGE}[*] Start installing... \n${NOCOLOR}"
+		for (( org = 1; org <= $NO_ORGANIZATIONS; org++ )); do
+			for (( peer = 0; peer < $NO_PEERS; peer++ )); do
+				changeOrg $peer $org
+				echo -e "	${ORANGE}[*] Attempting install on peer${peer}.org${org}.${DOMAIN} ${NOCOLOR}"
+				for chaincode in "${ccodes[@]}"
+				do
+					peer lifecycle chaincode install ${chaincode}.tar.gz > ${OUTPUTDEV}
+					if [ $? -eq 1 ]; then
+							echo -e "		${RED}[-] Install of ${chaincode} Chaincode on peer${peer}.org${org}.${DOMAIN} failed!${NOCOLOR}"
+							return 1
+					fi
+				done
+				echo -e "${GREEN}	[+] Install on peer${peer}.org${org}.${DOMAIN} ${NOCOLOR} finished \n"
 			done
-			echo -e "${GREEN}	[+] Install on peer${peer}.org${org}.${DOMAIN} ${NOCOLOR} finished \n"
 		done
-	done
-	echo -e "${GREEN}[+] Installing finished ${NOCOLOR}"
-	echo -e "${PURPLE}>>> Alright everything seems to be installed, lets verify! ${NOCOLOR}"
-	changeOrg 0 1				# peer0.org1.domain
-	peer lifecycle chaincode queryinstalled >&log.txt
-	if [ $? -eq 1 ]; then
-			echo -e "		${RED}[-] Query of Chaincode on peer0.org1.${DOMAIN} failed!${NOCOLOR}"
-			return 1
+		echo -e "${GREEN}[+] Installing finished ${NOCOLOR}"
+		echo -e "${PURPLE}>>> Alright everything seems to be installed, lets verify! ${NOCOLOR}"
+		changeOrg 0 1				# peer0.org1.domain
+		peer lifecycle chaincode queryinstalled >&log.txt
+		if [ $? -eq 1 ]; then
+				echo -e "		${RED}[-] Query of Chaincode on peer0.org1.${DOMAIN} failed!${NOCOLOR}"
+				return 1
+		fi
+		cat log.txt
+		echo -e "${PURPLE}>>> Package Identifiers: ${NOCOLOR}"
+		for chaincode in "${ccodes[@]}"
+		do
+		    tmp=$(sed -n "/${chaincode}_1/{s/^Package ID: //; s/, Label:.*$//; p;}" log.txt)
+			echo -e "${LIGHTBLUE}>>> [>] ${chaincode}: ${tmp}  ${NOCOLOR}"	# indirect, allows to treat CID as a var name
+		done
 	fi
-	cat log.txt
-	echo -e "${PURPLE}>>> Package Identifiers: ${NOCOLOR}"
-	for chaincode in "${ccodes[@]}"
-	do
-	    tmp=$(sed -n "/${chaincode}_1/{s/^Package ID: //; s/, Label:.*$//; p;}" log.txt)
-		echo -e "${LIGHTBLUE}>>> [>] ${chaincode}: ${tmp}  ${NOCOLOR}"	# indirect, allows to treat CID as a var name
-	done
 	return 0
 }
 
 approveCC(){
 	echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<="
-    echo -e "${PURPLE}    e Y8b                                                              e88'Y88   e88'Y88"
-    echo -e "${PURPLE}   d8b Y8b    888 88e  888 88e  888,8,  e88 88e  Y8b Y888P  ,e e,     d888  'Y  d888  'Y "
-    echo -e "${PURPLE}  d888b Y8b   888 888b 888 888b 888 \"  d888 888b  Y8b Y8P  d88 88b   C8888     C8888     "
-    echo -e "${PURPLE} d888888888b  888 888P 888 888P 888    Y888 888P   Y8b \"   888   ,    Y888  ,d  Y888  ,d "
-    echo -e "${PURPLE}d8888888b Y8b 888 88\"  888 88\"  888     \"88 88\"     Y8P     \"YeeP\"     \"88,d88   \"88,d88 "
-    echo -e "${PURPLE}              888      888                                                               "
-    echo -e "${PURPLE}              888      888                                                               "
+  echo -e "${PURPLE}    e Y8b                                                              e88'Y88   e88'Y88"
+  echo -e "${PURPLE}   d8b Y8b    888 88e  888 88e  888,8,  e88 88e  Y8b Y888P  ,e e,     d888  'Y  d888  'Y "
+  echo -e "${PURPLE}  d888b Y8b   888 888b 888 888b 888 \"  d888 888b  Y8b Y8P  d88 88b   C8888     C8888     "
+  echo -e "${PURPLE} d888888888b  888 888P 888 888P 888    Y888 888P   Y8b \"   888   ,    Y888  ,d  Y888  ,d "
+  echo -e "${PURPLE}d8888888b Y8b 888 88\"  888 88\"  888     \"88 88\"     Y8P     \"YeeP\"     \"88,d88   \"88,d88 "
+  echo -e "${PURPLE}              888      888                                                               "
+  echo -e "${PURPLE}              888      888                                                               "
 	echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
-	echo -e "${PURPLE}>>> Now the installed Chaincodes need to be approved by the Orderers and the Organizations! ${NOCOLOR}"
-	echo -e "${ORANGE}[*] Start approving... ${NOCOLOR}"
-	for (( org = 1; org <= $NO_ORGANIZATIONS; org++ )); do
-		changeOrg 0 $org
-		for chaincode in "${ccodes[@]}"
-		do
-			CID=${chaincode}_ID
+	if [ ${#ccodes[@]} -eq 0 ]; then
+		echo -e "${LIGHTCYAN}	[i] No Chaincode to install, skipping"
+	else
+		echo -e "${PURPLE}>>> Now the installed Chaincodes need to be approved by the Orderers and the Organizations! ${NOCOLOR}"
+		echo -e "${ORANGE}[*] Start approving... ${NOCOLOR}"
+		for (( org = 1; org <= $NO_ORGANIZATIONS; org++ )); do
 			changeOrg 0 $org
-			echo -e "${ORANGE}		[*] Org${org} is approving ... ${NOCOLOR}"
-			peer lifecycle chaincode approveformyorg ${ORDERERS} --channelID ${CHANNEL_ID} --name $chaincode --version ${VERSION} --package-id $(sed -n "/${chaincode}_1/{s/^Package ID: //; s/, Label:.*$//; p;}" log.txt) --sequence ${VERSION} --waitForEvent > ${OUTPUTDEV}
-			if [ $? -eq 1 ]; then
-					echo -e "		${RED}	[-] Org${org} did not approve ${chaincode} Chaincode! ${NOCOLOR}"
-					return 1
-			fi
+			for chaincode in "${ccodes[@]}"
+			do
+				CID=${chaincode}_ID
+				changeOrg 0 $org
+				echo -e "${ORANGE}		[*] Org${org} is approving ... ${NOCOLOR}"
+				peer lifecycle chaincode approveformyorg ${ORDERERS} --channelID ${CHANNEL_ID} --name $chaincode --version ${VERSION} --package-id $(sed -n "/${chaincode}_1/{s/^Package ID: //; s/, Label:.*$//; p;}" log.txt) --sequence ${VERSION} --waitForEvent > ${OUTPUTDEV}
+				if [ $? -eq 1 ]; then
+						echo -e "		${RED}	[-] Org${org} did not approve ${chaincode} Chaincode! ${NOCOLOR}"
+						return 1
+				fi
+			done
 		done
-	done
-	echo -e "${GREEN}[+] Approving complete. ${NOCOLOR}"
+		echo -e "${GREEN}[+] Approving complete. ${NOCOLOR}"
+	fi
 	return 0
 }
 
 checkCommitReadiness(){
 	echo -e "${PURPLE}\n=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<="
-    echo -e "${PURPLE}  e88'Y88 888                      888        e88'Y88                                   ,e,   d8"
-    echo -e "${PURPLE} d888  'Y 888 ee   ,e e,   e88'888 888 ee    d888  'Y  e88 88e  888 888 8e  888 888 8e   \"   d88   "
-    echo -e "${PURPLE}C8888     888 88b d88 88b d888  '8 888 P    C8888     d888 888b 888 888 88b 888 888 88b 888 d88888"
-    echo -e "${PURPLE} Y888  ,d 888 888 888   , Y888   , 888 b     Y888  ,d Y888 888P 888 888 888 888 888 888 888  888 "
-    echo -e "${PURPLE}  \"88,d88 888 888  \"YeeP\"  \"88,e8' 888 8b     \"88,d88  \"88 88\"  888 888 888 888 888 888 888  888"
+  echo -e "${PURPLE}  e88'Y88 888                      888        e88'Y88                                   ,e,   d8"
+  echo -e "${PURPLE} d888  'Y 888 ee   ,e e,   e88'888 888 ee    d888  'Y  e88 88e  888 888 8e  888 888 8e   \"   d88   "
+  echo -e "${PURPLE}C8888     888 88b d88 88b d888  '8 888 P    C8888     d888 888b 888 888 88b 888 888 88b 888 d88888"
+  echo -e "${PURPLE} Y888  ,d 888 888 888   , Y888   , 888 b     Y888  ,d Y888 888P 888 888 888 888 888 888 888  888 "
+  echo -e "${PURPLE}  \"88,d88 888 888  \"YeeP\"  \"88,e8' 888 8b     \"88,d88  \"88 88\"  888 888 888 888 888 888 888  888"
 	echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
-	echo -e "${PURPLE}>>> Now that the chaincodes are approved by each organization, they need to be committed. First lets check for the commit readiness! ${NOCOLOR}"
-	changeOrg 0 1			#peer0.org1
-	for chaincode in "${ccodes[@]}"
-	do
-		echo -e "${ORANGE}		[*] Checking commit readiness for ${chaincode}... ${NOCOLOR}"
-		peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_ID} --name ${chaincode} --version ${VERSION} --sequence ${VERSION} --output json > ${OUTPUTDEV}
-		if [ $? -eq 1 ]; then
-				echo -e "		${RED}	[-] ${chaincode} not ready to be committed! ${NOCOLOR}"
-				return 1
-		fi
-	done
-	echo -e "${PURPLE}>>> JSON with true everywhere? "
+	if [ ${#ccodes[@]} -eq 0 ]; then
+		echo -e "${LIGHTCYAN}	[i] No Chaincode to install, skipping"
+	else
+		echo -e "${PURPLE}>>> Now that the chaincodes are approved by each organization, they need to be committed. First lets check for the commit readiness! ${NOCOLOR}"
+		changeOrg 0 1			#peer0.org1
+		for chaincode in "${ccodes[@]}"
+		do
+			echo -e "${ORANGE}		[*] Checking commit readiness for ${chaincode}... ${NOCOLOR}"
+			peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_ID} --name ${chaincode} --version ${VERSION} --sequence ${VERSION} --output json > ${OUTPUTDEV}
+			if [ $? -eq 1 ]; then
+					echo -e "		${RED}	[-] ${chaincode} not ready to be committed! ${NOCOLOR}"
+					return 1
+			fi
+		done
+		echo -e "${PURPLE}>>> JSON with true everywhere? "
+	fi
 	return 0
 
 }
@@ -337,31 +351,34 @@ commitCC(){
     echo -e "${PURPLE} Y888  ,d Y888 888P 888 888 888 888 888 888 888  888      Y888  ,d  Y888  ,d "
     echo -e "${PURPLE}  \"88,d88  \"88 88\"  888 888 888 888 888 888 888  888       \"88,d88   \"88,d88"
 	echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<\n"
-	echo -e "${PURPLE}>>> Alright, final step now. Lets commit all of the Chaincodes! ${NOCOLOR}"
-	changeOrg 0 1 		# peer0.org1
-	echo -e "${ORANGE}	[*] Start committing... ${NOCOLOR}"
-	for chaincode in "${ccodes[@]}"
-	do
-		echo -e "${ORANGE}		[*] Commit ${chaincode}... ${NOCOLOR}"
-		peer lifecycle chaincode commit ${ORDERERS} --channelID ${CHANNEL_ID} --name ${chaincode} $PEER_CON_PARAMS --version ${VERSION} --sequence ${VERSION} > ${OUTPUTDEV}
-		if [ $? -eq 1 ]; then
-				echo -e "		${RED}	[-] ${chaincode} could not be committed! ${NOCOLOR}"
-				return 1
-		fi
-	done
+	if [ ${#ccodes[@]} -eq 0 ]; then
+		echo -e "${LIGHTCYAN}	[i] No Chaincode to install, skipping"
+	else
+		echo -e "${PURPLE}>>> Alright, final step now. Lets commit all of the Chaincodes! ${NOCOLOR}"
+		changeOrg 0 1 		# peer0.org1
+		echo -e "${ORANGE}	[*] Start committing... ${NOCOLOR}"
+		for chaincode in "${ccodes[@]}"
+		do
+			echo -e "${ORANGE}		[*] Commit ${chaincode}... ${NOCOLOR}"
+			peer lifecycle chaincode commit ${ORDERERS} --channelID ${CHANNEL_ID} --name ${chaincode} $PEER_CON_PARAMS --version ${VERSION} --sequence ${VERSION} > ${OUTPUTDEV}
+			if [ $? -eq 1 ]; then
+					echo -e "		${RED}	[-] ${chaincode} could not be committed! ${NOCOLOR}"
+					return 1
+			fi
+		done
 
 
-	echo -e "${GREEN}	[+] Committing complete! ${NOCOLOR}"
+		echo -e "${GREEN}	[+] Committing complete! ${NOCOLOR}"
 
-	echo -e "${PURPLE}>>> Everything seems to be installed, lets see"
+		echo -e "${PURPLE}>>> Everything seems to be installed, lets see"
 
-	echo -e "\n${LIGHTCYAN} =<=<=<=<=<=<=<=<=<=<=<=<=<=<= Chaincodes <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
-	for chaincode in "${ccodes[@]}"
-	do
-		peer lifecycle chaincode querycommitted --channelID ${CHANNEL_ID} --name ${chaincode} > ${OUTPUTDEV}
-	done
-	echo -e "\n${LIGHTCYAN} =<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<="
-
+		echo -e "\n${LIGHTCYAN} =<=<=<=<=<=<=<=<=<=<=<=<=<=<= Chaincodes <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
+		for chaincode in "${ccodes[@]}"
+		do
+			peer lifecycle chaincode querycommitted --channelID ${CHANNEL_ID} --name ${chaincode} > ${OUTPUTDEV}
+		done
+		echo -e "\n${LIGHTCYAN} =<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<="
+	fi
 }
 
 writeScripts(){
@@ -379,13 +396,8 @@ writeScripts(){
 	echo -e "	echo \"Example: ./$INVOKEFILE fabric-authtoken createAuthToken [\\\"test\\\"] \"" >> $INVOKEFILE
 	echo -e "	exit 1" >> $INVOKEFILE
 	echo -e "fi" >> $INVOKEFILE
-	echo -e "ORDERERS=\"$ORDERERS\"" >> $INVOKEFILE
 	echo -e "CHANNEL_ID=$CHANNEL_ID" >> $INVOKEFILE
-	echo -e "export CORE_PEER_LOCALMSPID=$CORE_PEER_LOCALMSPID" >> $INVOKEFILE
-	echo -e "export CORE_PEER_MSPCONFIGPATH=$CORE_PEER_MSPCONFIGPATH" >> $INVOKEFILE
-	echo -e "export CORE_PEER_ADDRESS=$CORE_PEER_ADDRESS" >> $INVOKEFILE
-	echo -e "export CORE_PEER_TLS_ROOTCERT_FILE=$CORE_PEER_TLS_ROOTCERT_FILE" >> $INVOKEFILE
-	echo -e "PEER_CON_PARAMS=\"$PEER_CON_PARAMS\"" >> $INVOKEFILE
+	echo -e "source peer_vars.sh" >> $INVOKEFILE
 	echo -e "FUNCTION=\$2" >> $INVOKEFILE
 	echo -e "SMARTCONTRACT=\$1" >> $INVOKEFILE
 	echo -e "ARGS=\$3" >> $INVOKEFILE
@@ -406,10 +418,7 @@ writeScripts(){
 	echo -e "	exit 1" >> $QUERYFILE
 	echo -e "fi" >> $QUERYFILE
 	echo -e "CHANNEL_ID=$CHANNEL_ID" >> $QUERYFILE
-	echo -e "export CORE_PEER_LOCALMSPID=$CORE_PEER_LOCALMSPID" >> $QUERYFILE
-	echo -e "export CORE_PEER_MSPCONFIGPATH=$CORE_PEER_MSPCONFIGPATH" >> $QUERYFILE
-	echo -e "export CORE_PEER_ADDRESS=$CORE_PEER_ADDRESS" >> $QUERYFILE
-	echo -e "export CORE_PEER_TLS_ROOTCERT_FILE=$CORE_PEER_TLS_ROOTCERT_FILE" >> $QUERYFILE
+	echo -e "source peer_vars.sh" >> $QUERYFILE
 	echo -e "FUNCTION=\$2" >> $QUERYFILE
 	echo -e "SMARTCONTRACT=\$1" >> $QUERYFILE
 	echo -e "ARGS=\$3" >> $QUERYFILE
@@ -634,4 +643,3 @@ echo -e "${PURPLE}888 88\"    \"88 88\"  888 888  \"YeeP\""
 #echo -e "${PURPLE}|  '--'  |  \`--'  | |  |\\   | |  |____ |__| "
 #echo -e "${PURPLE}|_______/ \\______/  |__| \\__| |_______|(__) "
 echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
-

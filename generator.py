@@ -24,13 +24,16 @@ def generate_chaincode_entries():
         while con == "y" or con == "Y":
             try:
                 chaincode_name = input(bcolors.OKBLUE + "Name of the folder: ")
-
-                # Check if it exists
-                if os.path.exists("chaincodes/java/"+chaincode_name):
-                    fp.write(chaincode_name + "\n")
+                if chaincode_name == "":
+                    print("Ok no chaincode to install, continue.")
+                    con = "n"
                 else:
-                    print(bcolors.FAIL + "[-] You provided a non existing directory! Nothing written")
-                con = input("Add another? (Y/n)")
+                    # Check if it exists
+                    if os.path.exists("chaincodes/java/"+chaincode_name):
+                        fp.write(chaincode_name + "\n")
+                    else:
+                        print(bcolors.FAIL + "[-] You provided a non existing directory! Nothing written")
+                    con = input("Add another? (Y/n)")
             except ValueError:
                 print(bcolors.FAIL + "[-] Oof, you did not provide proper values. Exiting")
                 exit(1)
@@ -111,31 +114,90 @@ if __name__ == '__main__':
                                 _domain=args.domain)
     print(bcolors.HEADER + ">>> All done, you can proceed with Merlin! Bye")
     # Setting some Env Variable
-    os.environ["NO_ORDERERS"] = str(args.orderers)
-    os.environ["NO_ORGANIZATIONS"] = str(args.orgs)
-    os.environ["NO_PEERS"] = str(args.peers)
-    os.environ["DOMAIN"] = args.domain
-    os.environ["CONSORTIUM_NAME"] = args.consortium
+    basic_vars = [
+        f"NO_ORDERERS=\"{args.orderers}\"\n",
+        f"NO_ORGANIZATIONS=\"{args.orgs}\"\n",
+        f"NO_PEERS=\"{args.peers}\"\n",
+        f"DOMAIN=\"{args.domain}\"\n"
+        f"CONSORTIUM_NAME=\"{args.consortium}\"\n",
+        f"ORDERERS=\"{os.environ['ORDERERS']}\"\n",
+        f"PEER_CON_PARAMS=\"{os.environ['PEER_CON_PARAMS']}\"\n",
+    ]
 
-    env_str = "export NO_ORDERERS="+str(args.orderers) + "\n"
-    env_str += "export ORDERERS=\""+str(os.environ["ORDERERS"]) + "\"\n"
-    env_str += "export PEER_CON_PARAMS=\""+str(os.environ["PEER_CON_PARAMS"]) + "\"\n"
-    env_str += "export NO_PEERS=" + str(args.peers) + "\n"
-    env_str += "export NO_ORGANIZATIONS=" + str(args.orgs) + "\n"
-    env_str += "export NO_PEERS=" + str(args.peers) + "\n"
-    env_str += "export DOMAIN=" + str(args.domain) + "\n"
-    env_str += "export CONSORTIUM_NAME=" + str(args.consortium) + "\n"
+    connection_params = [
+        "CORE_PEER_LOCALMSPID=Org1MSP\n",
+        "CORE_PEER_TLS_ENABLED=true\n",
+        f"CORE_PEER_TLS_ROOTCERT_FILE=./crypto-config/peerOrganizations/org1.{args.domain}/peers/"
+        f"peer0.org1.{args.domain}/tls/ca.crt\n",
+        f"CORE_PEER_MSPCONFIGPATH=./crypto-config/peerOrganizations/org1.{args.domain}/users/"
+        f"Admin@org1.{args.domain}/msp\n",
+        f"export CORE_PEER_ADDRESS=localhost:{config.peer_defport}\n",
+        "BASEPATH=$PWD/crypto-config\n"
+    ]
     if kafka:
-        os.environ["NO_KAFKA"] = str(args.kafka)
-        env_str += "export NO_KAFKA=" + str(args.kafka) + "\n"
-    print(env_str)
+        basic_vars.append(f"NO_KAFKA=\"{args.kafka}\"")
+
+    # os.environ["NO_ORDERERS"] = str(args.orderers)
+    # os.environ["NO_ORGANIZATIONS"] = str(args.orgs)
+    # os.environ["NO_PEERS"] = str(args.peers)
+    # os.environ["DOMAIN"] = args.domain
+    # os.environ["CONSORTIUM_NAME"] = args.consortium
+
+    # env_str = "export NO_ORDERERS="+str(args.orderers) + "\n"
+    # env_str += "export ORDERERS=\""+str(os.environ["ORDERERS"]) + "\"\n"
+    # env_str += "export PEER_CON_PARAMS=\""+str(os.environ["PEER_CON_PARAMS"]) + "\"\n"
+    # env_str += "export NO_PEERS=" + str(args.peers) + "\n"
+    # env_str += "export NO_ORGANIZATIONS=" + str(args.orgs) + "\n"
+    # env_str += "export DOMAIN=" + str(args.domain) + "\n"
+    # env_str += "export CONSORTIUM_NAME=" + str(args.consortium) + "\n"
+    # if kafka:
+    #     os.environ["NO_KAFKA"] = str(args.kafka)
+    #     env_str += "export NO_KAFKA=" + str(args.kafka) + "\n"
+    # print(env_str)
+    # Export the Connection Parameters to a source bash file
+
+
+
     y = input(bcolors.FAIL + "Start Merlin now? [y/n]")
     if y == "y":
         out = input(bcolors.FAIL + "Do you want Debug output? [y/n]")
         if out == "n":
-            os.environ["OUTPUTDEV"] = "/dev/null"
-            env_str += "export OUTPUTDEV=/dev/null\n"
-        os.system(env_str + " bash merlin.sh")
+            basic_vars.append("OUTPUTDEV=/dev/null")
+        with open("peer_vars.sh", "w+") as con:
+            # con.write(f"ORDERERS=\"{os.environ['ORDERERS']}\"\n")
+            # con.write(f"PEER_CON_PARAMS=\"{os.environ['PEER_CON_PARAMS']}\"\n")
+            # con.write("CORE_PEER_LOCALMSPID=Org1MSP\n")
+            # con.write("CORE_PEER_TLS_ENABLED=true\n")
+            # con.write(f"CORE_PEER_TLS_ROOTCERT_FILE=./crypto-config/peerOrganizations/org1.{args.domain}/peers/"
+            #           f"peer0.org1.{args.domain}/tls/ca.crt\n")
+            # con.write(f"CORE_PEER_MSPCONFIGPATH=./crypto-config/peerOrganizations/org1.{args.domain}/users/"
+            #           f"Admin@org1.{args.domain}/msp\n")
+            # con.write(f"export CORE_PEER_ADDRESS=localhost:{config.peer_defport}\n")
+            # con.write("BASEPATH=$PWD/crypto-config\n")
+            # con.write("DOMAIN=dredev.de\n")
+            # con.write(f"NO_PEERS={args.peers}\n")
+            # con.write(f"NO_ORGANIZATIONS={args.orgs}\n")
+            # con.write(f"DOMAIN={args.domain}\n")
+            # con.write(f"CONSORTIUM_NAME={args.consortium}\n")
+            # if kafka:
+            #     os.environ["NO_KAFKA"] = str(args.kafka)
+            # env_str += "export NO_KAFKA=" + str(args.kafka) + "\n"
+            con.writelines(basic_vars)
+            con.writelines(connection_params)
+            co = ["changeOrg(){\n",
+                  "  org=$2\n",
+                  "  peer=$1\n",
+                  "  export baseport=$(( 7051+1000*(($NO_PEERS*($org -1))+$peer) ))\n",
+                  "  export CORE_PEER_LOCALMSPID=Org${org}MSP\n",
+                  "  export CORE_PEER_TLS_ENABLED=true\n",
+                  "  export CORE_PEER_TLS_ROOTCERT_FILE=$BASEPATH/peerOrganizations/org${org}.${DOMAIN}/peers/"
+                  "peer0.org${org}.${DOMAIN}/tls/ca.crt\n",
+                  "  export CORE_PEER_MSPCONFIGPATH=$BASEPATH/peerOrganizations/org${org}.${DOMAIN}/users/"
+                  "Admin@org${org}.${DOMAIN}/msp\n",
+                  "  export CORE_PEER_ADDRESS=localhost:${baseport}\n"
+                  "}\n"]
+            con.writelines(co)
+        os.system("bash merlin.sh")
     else:
         print(bcolors.HEADER + "Alright, Quitting")
 
