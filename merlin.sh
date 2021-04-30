@@ -398,6 +398,7 @@ writeScripts(){
 	echo -e "fi" >> $INVOKEFILE
 	echo -e "CHANNEL_ID=$CHANNEL_ID" >> $INVOKEFILE
 	echo -e "source peer_vars.sh" >> $INVOKEFILE
+	echo -e "changeOrg 0 1" >> $INVOKEFILE
 	echo -e "FUNCTION=\$2" >> $INVOKEFILE
 	echo -e "SMARTCONTRACT=\$1" >> $INVOKEFILE
 	echo -e "ARGS=\$3" >> $INVOKEFILE
@@ -419,6 +420,7 @@ writeScripts(){
 	echo -e "fi" >> $QUERYFILE
 	echo -e "CHANNEL_ID=$CHANNEL_ID" >> $QUERYFILE
 	echo -e "source peer_vars.sh" >> $QUERYFILE
+	echo -e "changeOrg 0 1" >> $QUERYFILE
 	echo -e "FUNCTION=\$2" >> $QUERYFILE
 	echo -e "SMARTCONTRACT=\$1" >> $QUERYFILE
 	echo -e "ARGS=\$3" >> $QUERYFILE

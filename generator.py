@@ -162,7 +162,7 @@ if __name__ == '__main__':
     if y == "y":
         out = input(bcolors.FAIL + "Do you want Debug output? [y/n]")
         if out == "n":
-            basic_vars.append("OUTPUTDEV=/dev/null")
+            basic_vars.append("OUTPUTDEV=/dev/null\n")
         with open("peer_vars.sh", "w+") as con:
             # con.write(f"ORDERERS=\"{os.environ['ORDERERS']}\"\n")
             # con.write(f"PEER_CON_PARAMS=\"{os.environ['PEER_CON_PARAMS']}\"\n")
@@ -200,4 +200,3 @@ if __name__ == '__main__':
         os.system("bash merlin.sh")
     else:
         print(bcolors.HEADER + "Alright, Quitting")
-
