@@ -52,7 +52,7 @@ generateCryptoStuff(){
 				echo -e "		${RED}[-] genesis.block not created ${NOCOLOR}"
 				return 1
 		fi
-		configtxgen -profile $MAINPROFILE -outputCreateChannelTx ./config/channel.tx -channelID mychannel > ${OUTPUTDEV}
+		configtxgen -profile $MAINPROFILE -outputCreateChannelTx ./config/channel.tx -channelID ${CHANNEL_ID} > ${OUTPUTDEV}
 		if [ -f ./config/channel.tx ]; then
 				echo -e "		${GREEN}[+] channel.tx created ${NOCOLOR}"
 		else

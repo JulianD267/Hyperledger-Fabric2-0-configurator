@@ -40,6 +40,7 @@ def generate_docker_compose(_network_config: NetworkConfiguration,
             ],
             "ports": [f"{_network_config.ca_defport + i * 1000}:{_network_config.ca_defport}"],
             "command": f"sh -c 'fabric-ca-server start "
+                       f"--csr.hosts ca.org{i+1}.{_domain},localhost "    
                        f"--ca.certfile /etc/hyperledger/fabric-ca-server-config/ca.org{i + 1}.{_domain}-cert.pem "
                        f"--ca.keyfile /etc/hyperledger/fabric-ca-server-config/priv_sk -b admin:adminpw -d'",
             "volumes": [
@@ -255,8 +256,8 @@ def generate_docker_compose(_network_config: NetworkConfiguration,
                 "command": "peer node start",
                 "ports": [
                     f"{ _network_config.peer_defport   +1000*((_peers * org) + peer)}:{_network_config.peer_defport}",
-                    # f"{(_network_config.peer_defport+1)+1000*((_peers * org) + peer)}:{_network_config.peer_defport+1}",
-                    # f"{(_network_config.peer_defport+2) + 1000*((_peers*org) + peer)}:{_network_config.peer_defport+2}",
+                    f"{(_network_config.peer_defport+1)+1000*((_peers * org) + peer)}:{_network_config.peer_defport+1}",
+                    f"{(_network_config.peer_defport+2)+1000*((_peers * org) + peer)}:{_network_config.peer_defport+2}",
                 ],
                 "volumes": [
                     "/var/run/:/host/var/run/",

@@ -162,7 +162,7 @@ def generate_configtx(_network_config: NetworkConfiguration,
             },
             "Endorsement": {
                 "Type": "ImplicitMeta",
-                "Rule": DoubleQuotedScalarString("MAJORITY Endorsement"),
+                "Rule": DoubleQuotedScalarString("ANY Endorsement"),
             },
             "Readers": {
                 "Type": "ImplicitMeta",
