@@ -1,7 +1,7 @@
 from generator_scripts.format import bcolors, NetworkConfiguration
 import ruamel.yaml
 from ruamel.yaml.scalarstring import DoubleQuotedScalarString
-
+import os
 
 def generate_connection_profile(_network_config: NetworkConfiguration,
                                 _peers,
@@ -16,6 +16,7 @@ def generate_connection_profile(_network_config: NetworkConfiguration,
     :param _orderers: the number of orderers to configure
     :param _domain: the domain of the channel
     """
+    cwd = os.getcwd()
     new_yaml = ruamel.yaml.YAML()
     orderer_list = [f"orderer{i+1}.{_domain}" for i in range(_orderers)]
     print(bcolors.WARNING + "[*] Creating Connection Profile")
@@ -30,6 +31,23 @@ def generate_connection_profile(_network_config: NetworkConfiguration,
                 "eventSource": True,
             }})
     print(bcolors.OKGREEN + "   [+] Peer List COMPLETE")
+    print(bcolors.WARNING + "   [*] Create Client List")
+
+    client = {
+        "organization": "Org1",
+        "connection": {
+            "options": {
+                "grpc.keepalive_time_ms": 120000
+            },
+            "timeout":{
+                "peer": {
+                    "endorser": ruamel.yaml.scalarstring.SingleQuotedScalarString('300')
+                },
+                "orderer": ruamel.yaml.scalarstring.SingleQuotedScalarString('300')
+            }
+        }
+    }
+    print(bcolors.OKGREEN + "   [+] Client List COMPLETE")
     print(bcolors.WARNING + "   [*] Create Channel List")
 
     channels = {
@@ -58,7 +76,10 @@ def generate_connection_profile(_network_config: NetworkConfiguration,
     for orderer in orderer_list:
         ordes.update({
             orderer: {
-                "url": f"grpc://localhost:{_network_config.orderer_defport+1000*i}",
+                "url": f"grpcs://orderer{i+1}.{_domain}:{_network_config.orderer_defport+1000*i}",
+                "tlsCACerts": {
+                    "path": cwd + f"/crypto-config/ordererOrganizations/{_domain}/tlsca/tlsca.{_domain}-cert.pem"
+                },
                 "grpcOptions": {
                     "ssl-target-name-override": orderer
                 }
@@ -69,10 +90,15 @@ def generate_connection_profile(_network_config: NetworkConfiguration,
     print(bcolors.WARNING + "   [*] Create Detail Peer List")
 
     peer_ls = {}
+    host_peers = []
     for peer in range(_peers):
         for org in range(_orgs):
+            host_peers.append(f"peer{peer}.org{org+1}.{_domain}")
             peer_ls.update({f"peer{peer}.org{org+1}.{_domain}": {
-                "url": f"grpc://localhost:{_network_config.peer_defport + 1000 * ((_peers * org) + peer)}",
+                "url": f"grpcs://peer{peer}.org{org+1}.{_domain}:{_network_config.peer_defport + 1000 * ((_peers * org) + peer)}",
+                "tlsCACerts": {
+                    "path": cwd + f"/crypto-config/peerOrganizations/org{org+1}.{_domain}/tlsca/tlsca.org{org+1}.{_domain}-cert.pem"
+                },
                 "grpcOptions": {
                     "ssl-target-name-override": f"peer{peer}.org{org+1}.{_domain}",
                     "request-timeout": 120001
@@ -84,9 +110,10 @@ def generate_connection_profile(_network_config: NetworkConfiguration,
     ca_ls = {}
     i = 0
     for org in range(_orgs):
+        host_peers.append("ca.org{}.{}".format(org+1, _domain))
         ca_ls.update({
             "ca.org{}.{}".format(org+1, _domain): {
-                "url": f"http://localhost:{_network_config.ca_defport+1000*i}",
+                "url": f"https://ca.org{org+1}.{_domain}:{_network_config.ca_defport+1000*i}",
                 "httpOptions": {
                     "verify": False,
                 },
@@ -104,10 +131,12 @@ def generate_connection_profile(_network_config: NetworkConfiguration,
     print(bcolors.OKBLUE + "======= Generating final Structure =======")
 
     final = {
+
         "name": DoubleQuotedScalarString(f"{_peers}-peer.{_orgs}-org.{_orderers}-orderers.{_domain}"),
         "x-type": DoubleQuotedScalarString("hlfv2"),
         "description": DoubleQuotedScalarString("Connection profile"),
         "version": DoubleQuotedScalarString("1.0"),
+        "client": client,
         "channels": channels,
         "organizations": organiz,
         "orderers": ordes,
@@ -117,6 +146,11 @@ def generate_connection_profile(_network_config: NetworkConfiguration,
     print(bcolors.OKBLUE + "======= Final Structure COMPLETE =======")
 
     f = open("connection_profile.yaml", "w")
+    f.write("# Please add the following lines to your DNS resolver like /etc/hosts\n")
+    for peer in host_peers:
+        f.write("# 127.0.0.1 " + peer + "\n")
+    for orderer in orderer_list:
+        f.write("# 127.0.0.1 " + orderer + "\n")
     new_yaml.dump(final, f)
     f.close()
     print(bcolors.OKGREEN + "[+] Connection Profile Created")
