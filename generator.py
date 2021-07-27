@@ -4,7 +4,7 @@ from generator_scripts.format import bcolors, NetworkConfiguration
 from generator_scripts.gen_configtx import generate_configtx
 from generator_scripts.gen_connection_profile import generate_connection_profile
 from generator_scripts.gen_crypto_config import generate_crypto_config
-from generator_scripts.gen_docker_compose import generate_docker_compose
+from generator_scripts.gen_docker_compose import generate_docker_compose, generate_docker_compose_pi
 from generator_scripts.gen_core import generate_core
 from generator_scripts.gen_env import generate_env
 
@@ -29,7 +29,7 @@ def generate_chaincode_entries():
                     con = "n"
                 else:
                     # Check if it exists
-                    if os.path.exists("chaincodes/java/"+chaincode_name):
+                    if os.path.exists("chaincodes/java/"+chaincode_name) or os.path.exists("chaincodes/go/"+chaincode_name):
                         fp.write(chaincode_name + "\n")
                     else:
                         print(bcolors.FAIL + "[-] You provided a non existing directory! Nothing written")
@@ -41,8 +41,8 @@ def generate_chaincode_entries():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Automated Hyperledger Fabic Network Generator.")
-    parser.add_argument('-o', dest="orderers", default=4, type=int, help='Number of Orderers ')
-    parser.add_argument('-O', dest="orgs", default=2, type=int, help='Number of Organizations ')
+    parser.add_argument('-o', dest="orderers", default=1, type=int, help='Number of Orderers ')
+    parser.add_argument('-O', dest="orgs", default=1, type=int, help='Number of Organizations ')
     parser.add_argument('-p', dest="peers", default=2, type=int, help='Number of Peers per Organization ')
     parser.add_argument('-k', dest="kafka", default=-1, type=int, help='Number of Kafka Brokers. NOTE: If you set this,'
                                                                        'Kafka Ordering will be enabled instead of Raft!'
@@ -104,7 +104,14 @@ if __name__ == '__main__':
                             _domain=args.domain,
                             _kafka_nodes=args.kafka
                             )
-    print(bcolors.HEADER + ">>> docker-compose.yaml has been created. Now finally generate the core.yaml file.")
+    generate_docker_compose_pi(_network_config=config,
+                            _orderers=args.orderers,
+                            _orgs=args.orgs,
+                            _peers=args.peers,
+                            _domain=args.domain,
+                            _kafka_nodes=args.kafka
+                            )
+    print(bcolors.HEADER + ">>> docker-compose.yaml and docker-compose-pi.yaml have been created. Now finally generate the core.yaml file.")
     generate_core()
     print(bcolors.HEADER + ">>> core.yaml has been created.")
     generate_connection_profile(_network_config=config,
@@ -191,12 +198,15 @@ if __name__ == '__main__':
                   "  export CORE_PEER_LOCALMSPID=Org${org}MSP\n",
                   "  export CORE_PEER_TLS_ENABLED=true\n",
                   "  export CORE_PEER_TLS_ROOTCERT_FILE=$BASEPATH/peerOrganizations/org${org}.${DOMAIN}/peers/"
-                  "peer0.org${org}.${DOMAIN}/tls/ca.crt\n",
+                  "peer${peer}.org${org}.${DOMAIN}/tls/ca.crt\n",
                   "  export CORE_PEER_MSPCONFIGPATH=$BASEPATH/peerOrganizations/org${org}.${DOMAIN}/users/"
                   "Admin@org${org}.${DOMAIN}/msp\n",
-                  "  export CORE_PEER_ADDRESS=localhost:${baseport}\n"
+                  "  export CORE_PEER_ADDRESS=peer${peer}.org${org}.${DOMAIN}:${baseport}\n"
                   "}\n"]
             con.writelines(co)
         os.system("bash merlin.sh")
+        print(bcolors.WARNING + "Now go ahead an start the docker-compose file on your Pi")
+        input("Ready? Press any Key to continue")
+        os.system("bash merlin_cont.sh")
     else:
         print(bcolors.HEADER + "Alright, Quitting")

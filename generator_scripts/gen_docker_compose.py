@@ -168,7 +168,7 @@ def generate_docker_compose(_network_config: NetworkConfiguration,
                         ])
         order = {
             "container_name": f"orderer{i + 1}.{_domain}",
-            "image": "hyperledger/fabric-orderer:2.0",
+            "image": "hyperledger/fabric-orderer:2.1",
             "environment": env,
             "working_dir": "/opt/gopath/src/github.com/hyperledger/fabric/orderer",
             "command": "orderer",
@@ -215,13 +215,13 @@ def generate_docker_compose(_network_config: NetworkConfiguration,
         print(bcolors.WARNING + f" [*] Generating org{org + 1}.{_domain}")
         for peer in range(_peers):
             peer_addresses += f"--peerAddresses " \
-                              f"localhost:{_network_config.peer_defport + 1000 * ((_peers * org) + peer)} " \
+                              f"peer{peer}.org{org + 1}.{_domain}:{_network_config.peer_defport + 1000 * ((_peers * org) + peer)} " \
                               f"--tlsRootCertFiles {basepath}/peerOrganizations/org{org + 1}.{_domain}/" \
                               f"peers/peer{peer}.org{org + 1}.{_domain}/tls/ca.crt "
             print(bcolors.WARNING + f"     [+] Generating peer{peer}.org{org + 1}.{_domain}")
             pe = {
                 "container_name": f"peer{peer}.org{org + 1}.{_domain}",
-                "image": "hyperledger/fabric-peer:2.0",
+                "image": "hyperledger/fabric-peer:2.1",
                 "environment": [
                     "CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock",
                     "CORE_LOGGING_PEER=debug",
@@ -306,7 +306,7 @@ def generate_docker_compose(_network_config: NetworkConfiguration,
     print(bcolors.WARNING + " [*] CLI Generation started")
     cli = {
         "container_name": "cli",
-        "image": "hyperledger/fabric-tools",
+        "image": "hyperledger/fabric-tools:2.1",
         "tty": True,
         # stdin_open: true
         "environment": [
@@ -357,4 +357,132 @@ def generate_docker_compose(_network_config: NetworkConfiguration,
     yaml_new.dump(final, f)
     print(bcolors.HEADER + "========================================")
     print(">>> docker-compose.yaml has been dumped!")
+    print("========================================")
+
+
+
+def generate_docker_compose_pi(_network_config: NetworkConfiguration,
+                            _orderers,
+                            _orgs,
+                            _peers,
+                            _domain,
+                            _kafka_nodes=2):
+    """
+    This function will create a docker-compose.yaml file within the current workdir.
+    :param _network_config: The Network Configuration structure, containing Ports and stuff
+    :param _orderers: the number of orderers to configure
+    :param _orgs: the number of organizations to configure
+    :param _peers: the number of peers to configure
+    :param _domain: the domain of the channel
+    :param _kafka_nodes: (Optional) the number of kafka nodes, if kafka ordering is enabled
+    """
+    yaml_new = ruamel.yaml.YAML()
+    services = {}       # Docker Compose Services
+
+    all_node_containers = []    
+    print(bcolors.OKBLUE + "======= Generating Peers for Organizations =======")
+    peer_addresses = ""
+    basepath = os.getcwd() + "/crypto-config"
+    print(bcolors.WARNING + f" [*] Generating org1.{_domain}")
+    peer=1
+    org=0
+    peer_addresses += f"--peerAddresses " \
+                      f"peer{peer}.org{org + 1}.{_domain}:{_network_config.peer_defport + 1000 * ((_peers * org) + peer)} " \
+                      f"--tlsRootCertFiles {basepath}/peerOrganizations/org{org + 1}.{_domain}/" \
+                      f"peers/peer{peer}.org{org + 1}.{_domain}/tls/ca.crt "
+    print(bcolors.WARNING + f"     [+] Generating peer{peer}.org{org + 1}.{_domain}")
+    pe = {
+            "container_name": f"peer{peer}.org{org + 1}.{_domain}",
+            "image": "busan15/fabric-peer:latest",
+            "environment": [
+            "CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock",
+            "CORE_LOGGING_PEER=debug",
+            "CORE_CHAINCODE_LOGGING_LEVEL=DEBUG",
+            f"CORE_PEER_ID=peer{peer}.org{org + 1}.{_domain}",
+            f"CORE_PEER_ADDRESS=peer{peer}.org{org + 1}.{_domain}:{_network_config.peer_defport}",
+            f"CORE_PEER_LOCALMSPID=Org{org + 1}MSP",
+            f"CORE_PEER_CHAINCODEADDRESS=peer{peer}.org{org + 1}.{_domain}:{_network_config.peer_defport+1}",
+            f"CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:{_network_config.peer_defport+1}",
+            "CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/peer/",
+            "CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_" + _network_config.network_name,
+            "CORE_LEDGER_STATE_STATEDATABASE=CouchDB",
+            f"CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb{peer}.org{org + 1}.{_domain}:"
+            f"{_network_config.couchdb_defport}",
+                    # The CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME and CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD
+                    # provide the credentials for ledger to connect to CouchDB.  The username and password must
+                    # match the username and password set for the associated CouchDB.
+            "CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=",
+            "CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=",
+            "CORE_PEER_TLS_ENABLED=true",
+            "CORE_PEER_GOSSIP_USELEADERELECTION=true",
+            "CORE_PEER_GOSSIP_ORGLEADER=false",
+
+            f"CORE_PEER_GOSSIP_BOOTSTRAP=peer{peer}.org{org + 1}.{_domain}:{_network_config.peer_defport}",
+            f"CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer{peer}.org{org + 1}.{_domain}:{_network_config.peer_defport}",
+            "CORE_PEER_PROFILE_ENABLED=true",
+            "CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt",
+            "CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key",
+            "CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt"
+        ],
+        "working_dir": "/opt/gopath/src/github.com/hyperledger/fabric",
+        "command": "peer node start",
+        "ports": [
+                f"{ _network_config.peer_defport   +1000*((_peers * org) + peer)}:{_network_config.peer_defport}",
+                f"{(_network_config.peer_defport+1)+1000*((_peers * org) + peer)}:{_network_config.peer_defport+1}",
+                f"{(_network_config.peer_defport+2)+1000*((_peers * org) + peer)}:{_network_config.peer_defport+2}",
+        ],
+        "volumes": [
+                "/var/run/:/host/var/run/",
+                f"./crypto-config/peerOrganizations/org{org + 1}.{_domain}/peers/peer{peer}.org{org + 1}.{_domain}/"
+                f"msp:/etc/hyperledger/msp/peer",
+                f"./crypto-config/peerOrganizations/org{org + 1}.{_domain}/peers/peer{peer}.org{org + 1}.{_domain}/"
+                f"tls:/etc/hyperledger/fabric/tls",
+                f"./crypto-config/peerOrganizations/org{org + 1}.{_domain}/users:/etc/hyperledger/msp/users",
+                "./config:/etc/hyperledger/configtx"
+        ],
+        "depends_on": [
+                f"couchdb{peer}.org{org + 1}.{_domain}"
+        ],
+        "networks": [
+                _network_config.network_name
+        ]
+    }
+    services.update({f"peer{peer}.org{org + 1}.{_domain}": pe})
+    all_node_containers.append(f"peer{peer}.org{org + 1}.{_domain}")
+    print(bcolors.OKGREEN + f"     [+] peer{peer}.org{org + 1}.{_domain} COMPLETE")
+    print(bcolors.WARNING + f"     [*] Generating couchdb{peer}.org{org + 1}.{_domain}")
+    cdb = {
+            "container_name": f"couchdb{peer}.org{org + 1}.{_domain}",
+            "image": "busan15/fabric-couchdb:latest",
+            "environment": [
+                "COUCHDB_USER=",
+                "COUCHDB_PASSWORD="
+            ],
+            "ports": [
+                f"{_network_config.couchdb_defport + 1000*((_peers*org)+peer)}:{_network_config.couchdb_defport}"
+            ],
+            "networks": [
+                _network_config.network_name
+            ]
+    }
+    services.update({f"couchdb{peer}.org{org + 1}.{_domain}": cdb})
+    all_node_containers.append(f"couchdb{peer}.org{org + 1}.{_domain}")
+    print(bcolors.OKGREEN + f"     [+] couchdb{peer}.org{org + 1}.{_domain} COMPLETE")
+    print(bcolors.OKGREEN + f" [+] .org{org + 1}.{_domain} COMPLETE")
+    os.environ["PEER_CON_PARAMS"] = peer_addresses
+
+    print(bcolors.OKBLUE + "======= Generating final Structure =======")
+    final = {
+        "version": SingleQuotedScalarString("2"),
+        "networks": {
+            _network_config.network_name: None
+        },
+        "services": services
+    }
+
+    # yaml_new.dump(final, sys.stdout)
+    f = open("docker-compose-pi.yaml", "w")
+    yaml_new.dump(final, f)
+    print(bcolors.HEADER + "========================================")
+    print(">>> docker-compose-pi.yaml has been dumped!")
     print("========================================")

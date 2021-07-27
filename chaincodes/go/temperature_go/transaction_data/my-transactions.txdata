@@ -1,0 +1,44 @@
+[
+    {
+        "transactionName": "TemperatureExists",
+        "transactionLabel": "A test TemperatureExists transaction",
+        "arguments": [
+            "001"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "CreateTemperature",
+        "transactionLabel": "A test CreateTemperature transaction",
+        "arguments": [
+            "001",
+            "some value"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "ReadTemperature",
+        "transactionLabel": "A test ReadTemperature transaction",
+        "arguments": [
+            "001"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "UpdateTemperature",
+        "transactionLabel": "A test UpdateTemperature transaction",
+        "arguments": [
+            "001",
+            "some other value"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "DeleteTemperature",
+        "transactionLabel": "A test DeleteTemperature transaction",
+        "arguments": [
+            "001"
+        ],
+        "transientData": {}
+    }
+]
