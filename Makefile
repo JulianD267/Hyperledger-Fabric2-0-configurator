@@ -9,8 +9,8 @@ clean:
 				 core.yaml \
 				 crypto-config.yaml \
 				 docker-compose.yaml \
-				 invoke \
+				 invoke* \
 				 peer_vars.sh \
 				 log.txt \
-				 query \
+				 query* \
 				 *.block \
