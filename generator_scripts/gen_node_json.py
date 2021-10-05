@@ -28,7 +28,7 @@ def generate_node_json(_network_config: NetworkConfiguration,
 
     for org in range(_orgs):
         my_pem = ""
-        with open(f"crypto-config/peerOrganizations/org{org+1}.{_domain}/tlsca/tlsca.org{org+1}.{_domain}-cert.pem", "rb") as f:
+        with open(f"crypto-config/peerOrganizations/org{org+1}.{_domain}/msp/tlscacerts/tlsca.org{org+1}.{_domain}-cert.pem", "rb") as f:
             my_pem = base64.b64encode(f.read()).decode("utf-8")
         for peer in range(_peers):
             my_peer = {
@@ -36,7 +36,9 @@ def generate_node_json(_network_config: NetworkConfiguration,
                 "api_url": f"grpcs://{_url}:{_network_config.peer_defport + 1000 * ((_peers * org) + peer)}",
                 "type": "fabric-peer",
                 "msp_id": f"Org{org+1}MSP",
-                "pem": my_pem
+                "pem": my_pem,
+                "wallet": "wallet",
+                "identity": f"org{org+1}Admin"
             }
             nodes.append(my_peer)
 
@@ -49,13 +51,15 @@ def generate_node_json(_network_config: NetworkConfiguration,
             "type": "fabric-ca",
             "ca_name": f"ca.org{org+1}.{_domain}",
             "enroll_id": "admin",
-            "enroll_secret": "adminpw"
+            "enroll_secret": "adminpw",
+            "wallet": "wallet",
+            "identity": f"org{org+1}Admin"
          }
         nodes.append(my_ca)
     print(bcolors.OKGREEN + "   [+] CA Nodes COMPLETE")
     print(bcolors.WARNING + "   [*] Create Orderer Nodes")
 
-    with open(f"crypto-config/ordererOrganizations/{_domain}/tlsca/tlsca.{_domain}-cert.pem",
+    with open(f"crypto-config/ordererOrganizations/{_domain}/msp/tlscacerts/tlsca.{_domain}-cert.pem",
               "rb") as f:
         my_pem = base64.b64encode(f.read()).decode("utf-8")
     for orderer in range(_orderers):
@@ -64,13 +68,17 @@ def generate_node_json(_network_config: NetworkConfiguration,
             "api_url": f"grpc://{_url}:{_network_config.orderer_defport + orderer * 1000}",
             "type": "fabric-orderer",
             "msp_id": "OrdererMSP",
-            "pem": my_pem
+            "pem": my_pem,
+            "wallet": "wallet",
+            "identity": "adminOrderer",
+            "cluster": "ordererCluster"
         }
         nodes.append(my_ord)
     print(bcolors.OKGREEN + "   [+] Orderer Nodes COMPLETE")
     print(bcolors.OKBLUE + "======= Final Structure COMPLETE =======")
-
-    with open("Nodes/nodes.json", "w") as f:
+    if not os.path.exists("Nodes"):
+        os.makedirs("nodes")
+    with open("nodes/nodes.json", "w") as f:
         f.write(json.dumps(nodes))
 
     print(bcolors.OKGREEN + "[+] Nodes Created")

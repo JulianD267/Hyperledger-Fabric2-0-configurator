@@ -7,7 +7,8 @@ def generate_connection_profile(_network_config: NetworkConfiguration,
                                 _peers,
                                 _orgs,
                                 _orderers,
-                                _domain):
+                                _domain,
+                                _url):
     """
     This function will generate a connection_profile.yaml file for the current network within the current workdir.
     :param _network_config: The Network Configuration structure, containing ports and stuff
@@ -76,7 +77,7 @@ def generate_connection_profile(_network_config: NetworkConfiguration,
     for orderer in orderer_list:
         ordes.update({
             orderer: {
-                "url": f"grpcs://orderer{i+1}.{_domain}:{_network_config.orderer_defport+1000*i}",
+                "url": f"grpcs://{_url}:{_network_config.orderer_defport+1000*i}",
                 "tlsCACerts": {
                     "path": cwd + f"/crypto-config/ordererOrganizations/{_domain}/tlsca/tlsca.{_domain}-cert.pem"
                 },
@@ -95,7 +96,7 @@ def generate_connection_profile(_network_config: NetworkConfiguration,
         for org in range(_orgs):
             host_peers.append(f"peer{peer}.org{org+1}.{_domain}")
             peer_ls.update({f"peer{peer}.org{org+1}.{_domain}": {
-                "url": f"grpcs://peer{peer}.org{org+1}.{_domain}:{_network_config.peer_defport + 1000 * ((_peers * org) + peer)}",
+                "url": f"grpcs://{_url}:{_network_config.peer_defport + 1000 * ((_peers * org) + peer)}",
                 "tlsCACerts": {
                     "path": cwd + f"/crypto-config/peerOrganizations/org{org+1}.{_domain}/tlsca/tlsca.org{org+1}.{_domain}-cert.pem"
                 },
@@ -113,7 +114,7 @@ def generate_connection_profile(_network_config: NetworkConfiguration,
         host_peers.append("ca.org{}.{}".format(org+1, _domain))
         ca_ls.update({
             "ca.org{}.{}".format(org+1, _domain): {
-                "url": f"https://ca.org{org+1}.{_domain}:{_network_config.ca_defport+1000*i}",
+                "url": f"https://{_url}:{_network_config.ca_defport+1000*i}",
                 "httpOptions": {
                     "verify": False,
                 },

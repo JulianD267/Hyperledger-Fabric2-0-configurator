@@ -112,18 +112,10 @@ if __name__ == '__main__':
                                 _peers=args.peers,
                                 _orgs=args.orgs,
                                 _orderers=args.orderers,
-                                _domain=args.domain)
-    print(bcolors.HEADER + ">>> connection_profile.yaml has been created. Generating Nodes now")
-    generate_node_json(_network_config=config,
-                       _peers=args.peers,
-                       _orgs=args.orgs,
-                       _orderers=args.orderers,
-                       _domain=args.domain,
-                       _url="localhost")
-    print(bcolors.HEADER + ">>> nodes.json has been created. Generating Wallets now")
-    generate_wallets(_network_config=config,
-                     _orgs=args.orgs,
-                     _domain=args.domain)
+                                _domain=args.domain,
+                                _url="localhost")
+    print(bcolors.HEADER + ">>> connection_profile.yaml has been created.")
+
     print(bcolors.HEADER + ">>> All done, you can proceed with Merlin! Bye")
     # Setting some Env Variable
     basic_vars = [
@@ -210,5 +202,17 @@ if __name__ == '__main__':
                   "}\n"]
             con.writelines(co)
         os.system("bash merlin.sh")
+        print(bcolors.WARNING + "   [*] Starting credential creation..." + bcolors.ENDC)
+        generate_node_json(_network_config=config,
+                           _peers=args.peers,
+                           _orgs=args.orgs,
+                           _orderers=args.orderers,
+                           _domain=args.domain,
+                           _url="localhost")
+        print(bcolors.HEADER + ">>> nodes.json has been created. Generating Wallets now")
+        generate_wallets(_network_config=config,
+                         _orgs=args.orgs,
+                         _domain=args.domain)
+        print(bcolors.OKGREEN + "   [+] Credential creation complete" + bcolors.ENDC)
     else:
         print(bcolors.HEADER + "Alright, Quitting")

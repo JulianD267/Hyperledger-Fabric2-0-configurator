@@ -15,6 +15,8 @@ def generate_wallets(_network_config: NetworkConfiguration,
     cwd = os.getcwd()
     nodes = list()
 
+    if not os.path.exists("wallet"):
+        os.makedirs("wallet")
     print(bcolors.WARNING + "[*] Creating Wallets")
     # Orderer Wallet
     print(bcolors.WARNING + "   [*] Create Orderer ID")
@@ -61,7 +63,6 @@ def generate_wallets(_network_config: NetworkConfiguration,
             org_creds.update({"certificate": cert})
 
         org_id.update({"credentials": org_creds})
-
         with open(f"wallet/org{org+1}Admin.id", "w+") as f:
             f.write(json.dumps(org_id))
         print(bcolors.OKGREEN + f"   [+] Org{org + 1}MSP ID Complete")

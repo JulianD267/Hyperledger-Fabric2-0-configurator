@@ -168,7 +168,7 @@ def generate_docker_compose(_network_config: NetworkConfiguration,
                         ])
         order = {
             "container_name": f"orderer{i + 1}.{_domain}",
-            "image": "hyperledger/fabric-orderer:2.0",
+            "image": "hyperledger/fabric-orderer:2.3",
             "environment": env,
             "working_dir": "/opt/gopath/src/github.com/hyperledger/fabric/orderer",
             "command": "orderer",
@@ -221,7 +221,7 @@ def generate_docker_compose(_network_config: NetworkConfiguration,
             print(bcolors.WARNING + f"     [+] Generating peer{peer}.org{org + 1}.{_domain}")
             pe = {
                 "container_name": f"peer{peer}.org{org + 1}.{_domain}",
-                "image": "hyperledger/fabric-peer:2.0",
+                "image": "hyperledger/fabric-peer:2.3",
                 "environment": [
                     "CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock",
                     "CORE_LOGGING_PEER=debug",
@@ -306,7 +306,7 @@ def generate_docker_compose(_network_config: NetworkConfiguration,
     print(bcolors.WARNING + " [*] CLI Generation started")
     cli = {
         "container_name": "cli",
-        "image": "hyperledger/fabric-tools",
+        "image": "hyperledger/fabric-tools:2.3",
         "tty": True,
         # stdin_open: true
         "environment": [
