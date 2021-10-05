@@ -12,7 +12,6 @@ and follow the instructions. A new Hyperledger Fabric network will be started!
 We will go through the process of setting up the Hyperledger Fabric prerequisites and later on we define and start an example Hyperledger Fabric admin network with three organizations.
 
 [Hyperledger Fabric V2.0 - Create a Development Business Network on any Unix Machine](#hyperledger-fabric-v20---create-a-development-business-network-on-any-unix-machine)
-- [Hyperledger Fabric V2.0 - Create a Development Business Network on any Unix Machine](#hyperledger-fabric-v20---create-a-development-business-network-on-any-unix-machine)
   - [TL;DR](#tldr)
   - [Recommended Reading](#recommended-reading)
   - [Setup Your Environment](#setup-your-environment)
@@ -42,8 +41,9 @@ We will go through the process of setting up the Hyperledger Fabric prerequisite
       - [Approve the Chaincode](#approve-the-chaincode)
       - [ Check Commit Readiness](#-check-commit-readiness)
     - [ Instantiate/Commit chaincode](#-instantiatecommit-chaincode)
-      - [ Invoke](#-invoke)
-      - [ Query](#-query)
+      - [ Invoke](#invoke)
+      - [ Query](#query)
+    - [ Connect to IBM Blockchain Platform](#-ibm-blockchain-platform)
 
 ## [](#recommended-reading)Recommended Reading
 
@@ -1440,3 +1440,23 @@ You can replace this call by using the generated ```invoke``` script in the foll
 (Note this only works with bash and escaped quotes)
 
 Now you can do your thing! Enjoy
+
+## [](#-ibm-blockchain-platform)Connecting to IBM Blockchain Platform
+
+This repository offers a convenient feature: It allows you to easily connect to the [IBM Blockchain Platform](https://github.com/IBM-Blockchain/blockchain-vscode-extension) VS Code extension. It gives you quick development access to your new Fabric network!
+
+First of all, the extension allows you to connect to an IBM Blockchain. **BUT** it also offers to connect to a ```any other Fabric network```. For that you will need the following:
+- A wallet containing all the MSP Admin identities
+- A Node JSON file, containing all Nodes within the network
+- A ```connection-profile.yaml``` file for the gateway connection
+
+Conveniently, this script generates all of that for you! you will find the ```nodes.json``` file within the ```nodes/``` directory, the wallet identities within the ```wallet/``` directory and the ```connection-profile.yaml``` file within the root directory after generation. These can be imported directly. 
+
+1. Add the Wallet within the IBM Blockchain Platform extension 
+- ```Fabric-Wallets->Specify an existing File System Wallet ``` and pick the ```wallets``` folder
+2. Add the network nodes
+- ```Fabric-Environments->Add any other Fabric network``` give it a name and pick the ```nodes/nodes.json``` file.
+3. Add the gateway
+- ```Fabric-Gateways->Createa a gateway from a connection profile``` give it a name and pick ```connection-profile.yaml```
+
+Finally, you can click on the Gateway and the network and interact with it! Happy interacting
