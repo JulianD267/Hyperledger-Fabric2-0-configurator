@@ -7,7 +7,8 @@ from generator_scripts.gen_crypto_config import generate_crypto_config
 from generator_scripts.gen_docker_compose import generate_docker_compose
 from generator_scripts.gen_core import generate_core
 from generator_scripts.gen_env import generate_env
-
+from generator_scripts.gen_node_json import generate_node_json
+from generator_scripts.gen_wallet import generate_wallets
 config = NetworkConfiguration(_orderer_defport=7050,
                               _peer_defport=7051,
                               _ca_defport=7054,
@@ -112,6 +113,17 @@ if __name__ == '__main__':
                                 _orgs=args.orgs,
                                 _orderers=args.orderers,
                                 _domain=args.domain)
+    print(bcolors.HEADER + ">>> connection_profile.yaml has been created. Generating Nodes now")
+    generate_node_json(_network_config=config,
+                       _peers=args.peers,
+                       _orgs=args.orgs,
+                       _orderers=args.orderers,
+                       _domain=args.domain,
+                       _url="localhost")
+    print(bcolors.HEADER + ">>> nodes.json has been created. Generating Wallets now")
+    generate_wallets(_network_config=config,
+                     _orgs=args.orgs,
+                     _domain=args.domain)
     print(bcolors.HEADER + ">>> All done, you can proceed with Merlin! Bye")
     # Setting some Env Variable
     basic_vars = [
