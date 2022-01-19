@@ -2,13 +2,15 @@ from generator_scripts.format import bcolors, NetworkConfiguration
 import ruamel.yaml
 from ruamel.yaml.scalarstring import DoubleQuotedScalarString
 import os
+import string
 
 def generate_connection_profile(_network_config: NetworkConfiguration,
                                 _peers,
                                 _orgs,
                                 _orderers,
                                 _domain,
-                                _url):
+                                _url,
+                                _channels):
     """
     This function will generate a connection_profile.yaml file for the current network within the current workdir.
     :param _network_config: The Network Configuration structure, containing ports and stuff
@@ -50,13 +52,16 @@ def generate_connection_profile(_network_config: NetworkConfiguration,
     }
     print(bcolors.OKGREEN + "   [+] Client List COMPLETE")
     print(bcolors.WARNING + "   [*] Create Channel List")
-
-    channels = {
-        "mychannel": {
+    
+    channels = {}
+    for i in range(_channels):
+        channels.update({
+        f"channel{string.ascii_lowercase[i]}": {
             "orderers": orderer_list,
             "peers": peer_list
-        }
-    }
+        },
+    })
+
     print(bcolors.OKGREEN + "   [+] Channel List COMPLETE")
     print(bcolors.WARNING + "   [*] Create Organization List")
     organiz = {}

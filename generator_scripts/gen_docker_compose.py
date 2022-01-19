@@ -9,7 +9,8 @@ def generate_docker_compose(_network_config: NetworkConfiguration,
                             _orgs,
                             _peers,
                             _domain,
-                            _kafka_nodes=2):
+                            _kafka_nodes=2,
+                            _channels=1):
     """
     This function will create a docker-compose.yaml file within the current workdir.
     :param _network_config: The Network Configuration structure, containing Ports and stuff

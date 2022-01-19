@@ -5,13 +5,15 @@ import ruamel.yaml
 def generate_crypto_config(_orgs=2,
                            _peers=2,
                            _orderers=3,
-                           _domain="dredev.de"):
+                           _domain="dredev.de",
+                           _channels=1):
     """
     This function will generate the crypto-config.yaml file in the current directory
     :param _orgs: Number of Organizations to configure crypto material for
     :param _peers: Number of Peers per Organization
     :param _orderers: Number of Orderers
     :param _domain: Domain Name of the network
+    :param _channels: Number of channels that will be created (default 1)
     """
     new_yaml = ruamel.yaml.YAML()
     peer_list = []

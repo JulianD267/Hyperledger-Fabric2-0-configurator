@@ -1,0 +1,15 @@
+*.block
+*.yaml
+invoke
+query
+*.txt
+*.tar.gz
+peer_vars.sh
+.env
+nodes/*
+wallet/*
+crypto-config/*
+config/*
+chaincodes/*
+!chaincodes/fabric-default
+generator_scripts/__pycache__

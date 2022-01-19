@@ -3,6 +3,7 @@ export CHANNEL_ID=mychannel		# Channel name
 export VERSION=1				# Version of the Smart Contract
 export FABRIC_CFG_PATH=$PWD		# This is where the core.yaml is located
 source peer_vars.sh
+ASCII_CHARS=('a' 'b' 'c' 'd' 'e' 'f' 'g' 'h' 'i' 'j' 'k' 'l' 'm' 'n' 'o' 'p' 'q' 'r' 's' 't' 'u' 'v' 'w' 'x' 'y' 'z')
 MAINPROFILE=MainChannel
 ORDERERPROFILE=OrdererDefault
 BASEPATH=$PWD/crypto-config
@@ -52,21 +53,25 @@ generateCryptoStuff(){
 				echo -e "		${RED}[-] genesis.block not created ${NOCOLOR}"
 				return 1
 		fi
-		configtxgen -profile $MAINPROFILE -outputCreateChannelTx ./config/channel.tx -channelID ${CHANNEL_ID} > ${OUTPUTDEV}
-		if [ -f ./config/channel.tx ]; then
-				echo -e "		${GREEN}[+] channel.tx created ${NOCOLOR}"
-		else
-				echo -e "		${RED}[-] channel.tx not created ${NOCOLOR}"
-				return 1
-		fi
-		for (( i = 1; i <= $NO_ORGANIZATIONS; i++ )); do
-			configtxgen -profile $MAINPROFILE -outputAnchorPeersUpdate ./config/Org${i}MSPanchors.tx -channelID ${CHANNEL_ID} -asOrg Org${i}MSP > ${OUTPUTDEV}
-			if [ -f ./config/Org${i}MSPanchors.tx ]; then
-					echo -e "		${GREEN}[+] anchor peers for Org${i}MSP created ${NOCOLOR}"
+		for (( chan = 0; chan < $NO_CHANNELS; chan++ )); do
+			configtxgen -profile Channel${chan} -outputCreateChannelTx ./config/channel${ASCII_CHARS[chan]}.tx -channelID channel${ASCII_CHARS[chan]} > ${OUTPUTDEV}
+			if [ -f ./config/channel${ASCII_CHARS[chan]}.tx ]; then
+					echo -e "		${GREEN}[+] channel${ASCII_CHARS[chan]}.tx created ${NOCOLOR}"
 			else
-					echo -e "		${RED}[-] anchor peers not created ${NOCOLOR}"
+					echo -e "		${RED}[-] channel${ASCII_CHARS[chan]}.tx not created ${NOCOLOR}"
 					return 1
-			fi
+			fi			
+		done
+		for (( i = 1; i <= $NO_ORGANIZATIONS; i++ )); do
+			for (( chan = 0; chan < $NO_CHANNELS; chan++ )); do
+				configtxgen -profile Channel${chan} -outputAnchorPeersUpdate ./config/Org${i}MSPanchorsChannel${ASCII_CHARS[chan]}.tx -channelID channel${ASCII_CHARS[chan]} -asOrg Org${i}MSP > ${OUTPUTDEV}
+				if [ -f ./config/Org${i}MSPanchorsChannel${ASCII_CHARS[chan]}.tx ]; then
+						echo -e "		${GREEN}[+] anchor peers for Org${i}MSP in channel channel${ASCII_CHARS[chan]} created ${NOCOLOR}"
+				else
+						echo -e "		${RED}[-] anchor peers not created in channel channel${ASCII_CHARS[chan]} ${NOCOLOR}"
+						return 1
+				fi		
+			done
 		done
 		echo -e "${GREEN}[+] Generating channel.tx, genesis.block, anchor peers ${NOCOLOR}"
 		return 0
@@ -107,24 +112,26 @@ createChannel(){
     echo -e "${PURPLE}  \"88,d88 888     \"YeeP\" \"88 888  888    \"YeeP\"     \"88,d88 888 888 \"88 888 888 888 888 888  \"YeeP\" 888"
 	echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
 	changeOrg 0 1
-	if [ ! -f ./config/channel.tx ]; then
-			echo -e "${RED}>>> HEY! channel.tx is missing! Generate it first. Aborting"
+	for (( chan = 0; chan < $NO_CHANNELS; chan++ )); do
+		if [ ! -f ./config/channel${ASCII_CHARS[chan]}.tx ]; then
+			echo -e "${RED}>>> HEY! channel${ASCII_CHARS[chan]}.tx is missing! Generate it first. Aborting"
 			return 1
-	fi
-	set -x
-	peer channel create ${ORDERERS} -c ${CHANNEL_ID} -f ./config/channel.tx > ${OUTPUTDEV}
-	set +x
-	if [ $? -eq 1 ]; then
+		fi
+		set -x
+		peer channel create ${ORDERERS} -c channel${ASCII_CHARS[chan]} -f ./config/channel${ASCII_CHARS[chan]}.tx > ${OUTPUTDEV}
+		set +x	
+		if [ $? -eq 1 ]; then
 			echo -e "${PURPLE}>>> Ok second try ${NOCOLOR}"
 			sleep $SLEEPINTERVAL
-			peer channel create ${ORDERERS} -c ${CHANNEL_ID} -f ./config/channel.tx > ${OUTPUTDEV}
-	fi
-	echo -e "${PURPLE}>>> Is the block there?"
-	if [ $(ls | grep ${CHANNEL_ID}.block) == "${CHANNEL_ID}.block" ]; then
-		echo -e "${GREEN}[+] Yes it is, ${CHANNEL_ID}.block"
-	else
-		echo -e "${RED}[-] No, something went wrong, aborting"
-	fi
+			peer channel create ${ORDERERS} -c channel${ASCII_CHARS[chan]} -f ./config/channel${ASCII_CHARS[chan]}.tx > ${OUTPUTDEV}
+		fi
+		echo -e "${PURPLE}>>> Is the block there?"
+		if [ $(ls | grep channel${ASCII_CHARS[chan]}.block) == "channel${ASCII_CHARS[chan]}.block" ]; then
+			echo -e "${GREEN}[+] Yes it is, channel${ASCII_CHARS[chan]}.block"
+		else
+			echo -e "${RED}[-] No, something went wrong, aborting"
+		fi
+	done
 }
 
 joinChannel(){
@@ -135,19 +142,22 @@ joinChannel(){
         echo -e "${PURPLE} Y888  ,d 888 888 ,ee 888 888 888 888 888 888   , 888    e  88P Y888 888P 888 888 888"
         echo -e "${PURPLE}  \"88,d88 888 888 \"88 888 888 888 888 888  \"YeeP\" 888   \"8\",P'   \"88 88\"  888 888 888"
 		echo -e "${PURPLE}=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
-	 	echo -e "${PURPLE}>>> Joining Channel ${CHANNEL_ID} on each Peer ${NOCOLOR}"
-		echo -e "${ORANGE}[*] Start Joining of Channel ${CHANNEL_ID} ${NOCOLOR}"
+	 	echo -e "${PURPLE}>>> Joining Channel inchannel on each Peer ${NOCOLOR}"
+		
+		echo -e "${ORANGE}[*] Start Joining of Channels ${NOCOLOR}"
 		for (( org = 1; org <= $NO_ORGANIZATIONS; org++ )); do
 			for (( peer = 0; peer < $NO_PEERS; peer++ )); do
-					changeOrg $peer $org
-					echo -e "		${ORANGE}[*] Attempting Channel join for peer${peer}.org${org}.${DOMAIN} ${NOCOLOR}"
-					peer channel join --tls ${CORE_PEER_TLS_ENABLED} -b ${CHANNEL_ID}.block > ${OUTPUTDEV}
+				changeOrg $peer $org
+				for (( chan = 0; chan < $NO_CHANNELS; chan++ )); do
+					echo -e "		${ORANGE}[*] Attempting to join channel${ASCII_CHARS[chan]} on peer${peer}.org${org}.${DOMAIN} ${NOCOLOR}"
+					peer channel join --tls ${CORE_PEER_TLS_ENABLED} -b channel${ASCII_CHARS[chan]}.block > ${OUTPUTDEV}
 					if [ $? -eq 1 ]; then
-							echo -e "		${RED}[-] Channel join failed on peer${peer}.org${org}.${DOMAIN} ${NOCOLOR}"
+							echo -e "		${RED}[-] Join channel${ASCII_CHARS[chan]} failed on peer${peer}.org${org}.${DOMAIN} ${NOCOLOR}"
 							return 1
 					else
-							echo -e "		${GREEN}[+] Channel join succeeded on peer${peer}.org${org}.${DOMAIN} ${NOCOLOR}"
+							echo -e "		${GREEN}[+] Join channel${ASCII_CHARS[chan]} succeeded on peer${peer}.org${org}.${DOMAIN} ${NOCOLOR}"
 					fi
+				done
 			done
 		done
 		echo -e "${GREEN}[+] Joining succeeded ${NOCOLOR}"
@@ -168,13 +178,15 @@ updateAnchors(){
 	for (( org = 1; org <= $NO_ORGANIZATIONS; org++ )); do
 		echo -e "		${ORANGE}[*] Attempting Anchor Update for peer0.org${org}.${DOMAIN} ${NOCOLOR}"
 		changeOrg 0 ${org}		# Default Peer0 is always the Anchor
-		peer channel update ${ORDERERS} -c ${CHANNEL_ID} -f ./config/Org${org}MSPanchors.tx > ${OUTPUTDEV}
-		if [ $? -eq 1 ]; then
-				echo -e "		${RED}[-] Anchor Update failed on peer0.org${org}.${DOMAIN} ${NOCOLOR}"
-				return 1
-		else
-				echo -e "		${GREEN}[+] Anchor Update succeeded on peer0.org${org}.${DOMAIN} ${NOCOLOR}"
-		fi
+		for (( chan = 0; chan < $NO_CHANNELS; chan++ )); do
+			peer channel update ${ORDERERS} -c channel${ASCII_CHARS[chan]} -f ./config/Org${org}MSPanchorsChannel${ASCII_CHARS[chan]}.tx > ${OUTPUTDEV}
+			if [ $? -eq 1 ]; then
+					echo -e "		${RED}[-] Anchor Update on channel${ASCII_CHARS[chan]} failed on peer0.org${org}.${DOMAIN} ${NOCOLOR}"
+					return 1
+			else
+					echo -e "		${GREEN}[+] Anchor Update on channel${ASCII_CHARS[chan]} succeeded on peer0.org${org}.${DOMAIN} ${NOCOLOR}"
+			fi
+		done
 	done
 	return 0
 }
@@ -302,12 +314,14 @@ approveCC(){
 			do
 				CID=${chaincode}_ID
 				changeOrg 0 $org
-				echo -e "${ORANGE}		[*] Org${org} is approving ... ${NOCOLOR}"
-				peer lifecycle chaincode approveformyorg ${ORDERERS} --channelID ${CHANNEL_ID} --name $chaincode --version ${VERSION} --package-id $(sed -n "/${chaincode}_1/{s/^Package ID: //; s/, Label:.*$//; p;}" log.txt) --sequence ${VERSION} --waitForEvent > ${OUTPUTDEV}
-				if [ $? -eq 1 ]; then
-						echo -e "		${RED}	[-] Org${org} did not approve ${chaincode} Chaincode! ${NOCOLOR}"
-						return 1
-				fi
+				for (( chan = 0; chan < $NO_CHANNELS; chan++ )); do
+					echo -e "${ORANGE}		[*] Channel${ASCII_CHARS[chan]} Org${org} is approving ... ${NOCOLOR}"
+					peer lifecycle chaincode approveformyorg ${ORDERERS} --channelID channel${ASCII_CHARS[chan]} --name $chaincode --version ${VERSION} --package-id $(sed -n "/${chaincode}_1/{s/^Package ID: //; s/, Label:.*$//; p;}" log.txt) --sequence ${VERSION} --waitForEvent > ${OUTPUTDEV}
+					if [ $? -eq 1 ]; then
+							echo -e "		${RED}	[-] Org${org} did not approve ${chaincode} Chaincode! ${NOCOLOR}"
+							return 1
+					fi
+				done
 			done
 		done
 		echo -e "${GREEN}[+] Approving complete. ${NOCOLOR}"
@@ -330,12 +344,14 @@ checkCommitReadiness(){
 		changeOrg 0 1			#peer0.org1
 		for chaincode in "${ccodes[@]}"
 		do
-			echo -e "${ORANGE}		[*] Checking commit readiness for ${chaincode}... ${NOCOLOR}"
-			peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_ID} --name ${chaincode} --version ${VERSION} --sequence ${VERSION} --output json > ${OUTPUTDEV}
-			if [ $? -eq 1 ]; then
-					echo -e "		${RED}	[-] ${chaincode} not ready to be committed! ${NOCOLOR}"
-					return 1
-			fi
+			for (( chan = 0; chan < $NO_CHANNELS; chan++ )); do
+				echo -e "${ORANGE}		[*] Checking commit readiness for ${chaincode} on channel${ASCII_CHARS[chan]} ... ${NOCOLOR}"
+				peer lifecycle chaincode checkcommitreadiness --channelID channel${ASCII_CHARS[chan]} --name ${chaincode} --version ${VERSION} --sequence ${VERSION} --output json > ${OUTPUTDEV}
+				if [ $? -eq 1 ]; then
+						echo -e "		${RED}	[-] ${chaincode} not ready to be committed on channel${ASCII_CHARS[chan]}! ${NOCOLOR}"
+						return 1
+				fi
+			done
 		done
 		echo -e "${PURPLE}>>> JSON with true everywhere? "
 	fi
@@ -359,12 +375,14 @@ commitCC(){
 		echo -e "${ORANGE}	[*] Start committing... ${NOCOLOR}"
 		for chaincode in "${ccodes[@]}"
 		do
-			echo -e "${ORANGE}		[*] Commit ${chaincode}... ${NOCOLOR}"
-			peer lifecycle chaincode commit ${ORDERERS} --channelID ${CHANNEL_ID} --name ${chaincode} $PEER_CON_PARAMS --version ${VERSION} --sequence ${VERSION} > ${OUTPUTDEV}
-			if [ $? -eq 1 ]; then
-					echo -e "		${RED}	[-] ${chaincode} could not be committed! ${NOCOLOR}"
-					return 1
-			fi
+			for (( chan = 0; chan < $NO_CHANNELS; chan++ )); do
+				echo -e "${ORANGE}		[*] Commit ${chaincode} on channel${ASCII_CHARS[chan]}... ${NOCOLOR}"
+				peer lifecycle chaincode commit ${ORDERERS} --channelID channel${ASCII_CHARS[chan]} --name ${chaincode} $PEER_CON_PARAMS --version ${VERSION} --sequence ${VERSION} > ${OUTPUTDEV}
+				if [ $? -eq 1 ]; then
+						echo -e "		${RED}	[-] ${chaincode} could not be committed on channel${ASCII_CHARS[chan]}! ${NOCOLOR}"
+						return 1
+				fi
+			done
 		done
 
 
@@ -375,7 +393,9 @@ commitCC(){
 		echo -e "\n${LIGHTCYAN} =<=<=<=<=<=<=<=<=<=<=<=<=<=<= Chaincodes <=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=\n"
 		for chaincode in "${ccodes[@]}"
 		do
-			peer lifecycle chaincode querycommitted --channelID ${CHANNEL_ID} --name ${chaincode} > ${OUTPUTDEV}
+			for (( chan = 0; chan < $NO_CHANNELS; chan++ )); do
+				peer lifecycle chaincode querycommitted --channelID channel${ASCII_CHARS[chan]} --name ${chaincode} > ${OUTPUTDEV}
+			done
 		done
 		echo -e "\n${LIGHTCYAN} =<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<=<="
 	fi
@@ -396,7 +416,7 @@ writeScripts(){
 	echo -e "	echo \"Example: ./$INVOKEFILE fabric-authtoken createAuthToken [\\\"test\\\"] \"" >> $INVOKEFILE
 	echo -e "	exit 1" >> $INVOKEFILE
 	echo -e "fi" >> $INVOKEFILE
-	echo -e "CHANNEL_ID=$CHANNEL_ID" >> $INVOKEFILE
+	echo -e "CHANNEL_ID=channela" >> $INVOKEFILE
 	echo -e "source peer_vars.sh" >> $INVOKEFILE
 	echo -e "changeOrg 0 1" >> $INVOKEFILE
 	echo -e "FUNCTION=\$2" >> $INVOKEFILE
@@ -418,7 +438,7 @@ writeScripts(){
 	echo -e "	echo \"Example: ./$QUERYFILE fabric-authtoken readAuthToken [\\\"test\\\"] \"" >> $QUERYFILE
 	echo -e "	exit 1" >> $QUERYFILE
 	echo -e "fi" >> $QUERYFILE
-	echo -e "CHANNEL_ID=$CHANNEL_ID" >> $QUERYFILE
+	echo -e "CHANNEL_ID=channela" >> $QUERYFILE
 	echo -e "source peer_vars.sh" >> $QUERYFILE
 	echo -e "changeOrg 0 1" >> $QUERYFILE
 	echo -e "FUNCTION=\$2" >> $QUERYFILE

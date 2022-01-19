@@ -10,7 +10,8 @@ def generate_configtx(_network_config: NetworkConfiguration,
                       _consortium="WebConsortium",
                       _domain="dredev.de",
                       _blocksize=10,
-                      _timeout=1):
+                      _timeout=1,
+                      _channels=1,):
     """
     This Function will generate a configtx.yaml file in the current working dir.
     :param _network_config: Configuration Structure for Network affairs like ports or dns names
@@ -19,6 +20,7 @@ def generate_configtx(_network_config: NetworkConfiguration,
     :param _kafka_brokers: (Optional) if Kafka = true, Number of Kafka Nodes to configure (default 3)
     :param _consortium: Generic Consortium name (default "WebConsortium")
     :param _domain: Domain name of the network (default "dredev.de")
+    :param _channels: Number of channels that will be created (default 1)
     :param _blocksize: Configurable amount of transactions per block
     :param _timeout: Block Timeout, influencing block generation
     """
@@ -302,9 +304,12 @@ def generate_configtx(_network_config: NetworkConfiguration,
                         orga_list[1:]
                 }
             }
-
         },
-        "MainChannel": {
+    }
+
+    for i in range(_channels):
+        profiles.update({
+        f"Channel{i}": {
             "<<": channel,
             "Consortium": _consortium,
             "Application": {
@@ -314,9 +319,9 @@ def generate_configtx(_network_config: NetworkConfiguration,
             "Capabilities": {
                 "<<": app_capabilities
             }
-
         }
-    }
+    })
+
     print(bcolors.OKGREEN + "       [+] Generating Profiles COMPLETE")
     print(bcolors.OKBLUE + "    [*] Generating Final Object")
     final = {

@@ -51,6 +51,8 @@ if __name__ == '__main__':
     parser.add_argument('-d', dest="domain", default="dredev.de", type=str, help='The Domain that will be used')
     parser.add_argument('-c', dest="consortium", default="WebConsortium", type=str,
                         help='The Consortium that will be used')
+    parser.add_argument('-C', dest="channels", default=1, type=int,
+                        help='The amount of channels that shall be created. All peers will join every channel')
     parser.add_argument('-bs', dest="blocksize", default=10, type=int, help='The max amount of transactions per block')
     parser.add_argument('-t', dest="timeout", default=1, type=int, help='The timeout value in seconds until a block '
                                                                         'gets committed, if it is not filled to its '
@@ -87,7 +89,8 @@ if __name__ == '__main__':
     generate_crypto_config(_peers=args.peers,
                            _domain=args.domain,
                            _orderers=args.orderers,
-                           _orgs=args.orgs)
+                           _orgs=args.orgs,
+                           _channels=args.channels)
     print(bcolors.HEADER + ">>> Crypto Config has been created. Now lets create the config file for the transactions!")
     generate_configtx(_network_config=config,
                       _orgs=args.orgs,
@@ -96,14 +99,16 @@ if __name__ == '__main__':
                       _kafka_brokers=args.kafka,
                       _consortium=args.consortium,
                       _blocksize=args.blocksize,
-                      _timeout=args.timeout)
+                      _timeout=args.timeout,
+                      _channels=args.channels)
     print(bcolors.HEADER + ">>> config.tx has been created. Now generate the Docker-compose file.")
     generate_docker_compose(_network_config=config,
                             _orderers=args.orderers,
                             _orgs=args.orgs,
                             _peers=args.peers,
                             _domain=args.domain,
-                            _kafka_nodes=args.kafka
+                            _kafka_nodes=args.kafka,
+                            _channels=args.channels
                             )
     print(bcolors.HEADER + ">>> docker-compose.yaml has been created. Now finally generate the core.yaml file.")
     generate_core()
@@ -113,7 +118,8 @@ if __name__ == '__main__':
                                 _orgs=args.orgs,
                                 _orderers=args.orderers,
                                 _domain=args.domain,
-                                _url="localhost")
+                                _url="localhost",
+                                _channels=args.channels)
     print(bcolors.HEADER + ">>> connection_profile.yaml has been created.")
 
     print(bcolors.HEADER + ">>> All done, you can proceed with Merlin! Bye")
@@ -122,6 +128,7 @@ if __name__ == '__main__':
         f"NO_ORDERERS=\"{args.orderers}\"\n",
         f"NO_ORGANIZATIONS=\"{args.orgs}\"\n",
         f"NO_PEERS=\"{args.peers}\"\n",
+        f"NO_CHANNELS=\"{args.channels}\"\n",
         f"DOMAIN=\"{args.domain}\"\n"
         f"CONSORTIUM_NAME=\"{args.consortium}\"\n",
         f"ORDERERS=\"{os.environ['ORDERERS']}\"\n",
